@@ -47,4 +47,18 @@ public class EmailTask extends ConnectTask
 	return 0;
     }
 
+    protected int performQueryUsingQualifier(com.infinitegraph.pipelining.TaskContext taskContext,
+					     com.infinitegraph.GraphDatabase database)
+    {
+	this.initializeQualifiers();
+	this.vertex = this.query(taskContext,database,
+				 com.whois.WBNP.model.vertex.Email.class.getName(),
+				 this.getQueryTerm(),
+				 EmailObjectQualifier
+				 );
+	if(this.vertex != null)
+	    return 1;
+	return 0;
+    }
+
 }   

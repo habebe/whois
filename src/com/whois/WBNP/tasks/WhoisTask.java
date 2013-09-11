@@ -33,7 +33,8 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
     }	
 
     @SuppressWarnings("unchecked")
-    private java.util.HashMap<String,VertexIDEntry> getTargetEntryMap(com.infinitegraph.pipelining.TaskContext taskContext,String className) 
+    private java.util.HashMap<String,VertexIDEntry> getTargetEntryMap(com.infinitegraph.pipelining.TaskContext taskContext,
+								      String className) 
     {
 	java.util.HashMap<String,VertexIDEntry> map = (java.util.HashMap<String,VertexIDEntry>)taskContext.getTaskGroupData(className);
 	if(map == null) 
@@ -99,6 +100,64 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	    }
 	return nameServers;
     }
+
+
+
+    static com.objy.query.ObjectQualifier DomainObjectQualifier = null;
+    static com.objy.query.ObjectQualifier CountryObjectQualifier = null;
+    static com.objy.query.ObjectQualifier EmailObjectQualifier = null;
+    static com.objy.query.ObjectQualifier RegistrarObjectQualifier = null;
+    static com.objy.query.ObjectQualifier NameServerObjectQualifier = null;
+    static void initializeQualifiers()
+    {
+	if(DomainObjectQualifier == null)
+	    {
+		DomainObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Domain.class.getName(),"(name == $A:string)");	
+		CountryObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Country.class.getName(),"(name == $A:string)");
+		EmailObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Email.class.getName(),"(name == $A:string)");
+		RegistrarObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Registrar.class.getName(),"(name == $A:string)");
+		NameServerObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.NameServer.class.getName(),"(name == $A:string)");
+	    }
+    }
+    
+    private Node query(com.infinitegraph.pipelining.TaskContext taskContext,
+		       com.infinitegraph.GraphDatabase database,
+		       String className,String queryTerm,
+		       com.objy.query.ObjectQualifier qualifier
+		       )
+    {
+	Node node = null;
+	if(queryTerm != null)
+	    {
+		VertexIDEntry entry = this.getDataForTarget(taskContext,className,queryTerm);
+		node = new Node();
+		if(entry != null)
+		    {
+			if(entry.id > 0)
+			    node.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+		    }
+		else
+		    {
+			qualifier.setStringVarValue("A",queryTerm);
+			com.objy.db.app.Iterator iterator = taskContext.getSession().getFD().scan(className,qualifier);
+			if(iterator.hasNext())
+			    {
+				node.vertex = (com.infinitegraph.BaseVertex)iterator.next();
+			    }
+			if(node.vertex != null)
+			    this.setDataForTarget(taskContext,className,
+						  queryTerm,
+						  new VertexIDEntry(node.vertex.getId()));
+			else
+			    this.setDataForTarget(taskContext,className,
+						  queryTerm,
+						  new VertexIDEntry(-1));
+		    }
+		if(node.vertex != null)
+		    this.numberOfNodesFound += 1;
+	    }
+	return node;
+    }
     
     private transient int numberOfNodesFound = 0;
     private Node query(com.infinitegraph.pipelining.TaskContext taskContext,
@@ -142,6 +201,48 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	    }
 	return node;
     }
+
+    private void performQueryQualifier(com.infinitegraph.pipelining.TaskContext taskContext,
+				       com.infinitegraph.GraphDatabase database)
+    {
+	this.initializeQualifiers();
+	this.domainNode    = this.query(taskContext,database,
+					com.whois.WBNP.model.vertex.Domain.class.getName(),
+					this.getQueryTerm(),
+					DomainObjectQualifier
+					);
+	this.numberOfNodesFound = 0;
+	this.countryNode   = this.query(taskContext,database,
+					com.whois.WBNP.model.vertex.Country.class.getName(),
+					this.getCountry(),
+					CountryObjectQualifier
+					);
+	this.emailNode     = this.query(taskContext,database,
+					com.whois.WBNP.model.vertex.Email.class.getName(),
+					this.getEmail(),
+					EmailObjectQualifier
+					);
+	this.registrarNode = this.query(taskContext,database,
+					com.whois.WBNP.model.vertex.Registrar.class.getName(),
+					this.getRegistrar(),
+					RegistrarObjectQualifier
+					);
+	String[] nameServers = this.getNameServers();
+	if(nameServers != null)
+	    {
+		this.nameServerNodes = new Node[nameServers.length];
+		for(int i=0;i<nameServers.length;i++)
+		    {
+			this.nameServerNodes[i] = this.query(taskContext,database,
+							     com.whois.WBNP.model.vertex.NameServer.class.getName(),
+							     nameServers[i],
+							     NameServerObjectQualifier
+							     );
+			this.nameServerNodes[i].data = nameServers[i];
+		    }
+	    }
+    }
+
 
     private void performQuery(com.infinitegraph.pipelining.TaskContext taskContext,
 			      com.infinitegraph.GraphDatabase database)
@@ -272,7 +373,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	WhoisTask.PreProcessCounter += 1;
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 	logger.info(String.format("D,0,%d,%d",System.currentTimeMillis(),WhoisTask.PreProcessCounter));
-	this.performQuery(taskContext,database);
+	this.performQueryQualifier(taskContext,database);
 	if(this.numberOfNodesFound > 0)
 	    {
 		this.initializeEdgeTypes(database);
@@ -292,13 +393,16 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		gsd.getPlacementWorker().setPolicies(null);
 		
 		com.infinitegraph.GraphDatabase database = taskContext.getGraph();
-		VertexIDEntry entry = this.getDataForTarget(taskContext,
-							    com.whois.WBNP.model.vertex.Domain.class.getName(),
-							    getQueryTerm());
-		if((entry != null) && (entry.id > 0))
+		if(this.domainNode.vertex == null)
 		    {
-			this.domainNode.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
-			this.checkConnectivity();
+			VertexIDEntry entry = this.getDataForTarget(taskContext,
+								    com.whois.WBNP.model.vertex.Domain.class.getName(),
+								    getQueryTerm());
+			if((entry != null) && (entry.id > 0))
+			    {
+				this.domainNode.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+				this.checkConnectivity();
+			    }
 		    }
 		if(this.domainNode.vertex == null)
 		    {
