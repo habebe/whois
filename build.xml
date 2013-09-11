@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="whois" default="all" basedir=".">
+	<exec executable="hostname" failifexecutionfails="true" outputproperty="env._HOST_" />
+	<property environment="env"/>
+        <property name="src" value="src" />
+
+	<property name="build.dir" value="build" />
+    <property name="pipeline.dir" value="pipeline" />
+	<property name="build.classes" value="${build.dir}/classes" />
+	<property name="build.jar" value="${build.dir}/jar" />
+	<property name="build.lib" value="${build.dir}/lib" />
+	
+	<property name="ig.root" value="${env.IG_HOME}"/>
+	<property name="ig.lib" value="${ig.root}/lib"/>
+	<property name="tools" value="${env.PWD}/tools/lib"/>
+
+        <fail unless="env.IG_HOME" message="IG_HOME environment variable is not set."/>
+	    
+	<target name="prepare" description="Preparing build directory">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${build.classes}" />
+		<mkdir dir="${build.jar}" />
+		<mkdir dir="${build.lib}"/>
+        <mkdir dir="${pipeline.dir}"/>        
+	</target>	
+
+
+	<target name="clean" description="Remove all generated files.">
+		<delete dir="${build.dir}" />
+	</target>
+            
+   <target name="compile" depends="prepare" description="Compile all source code.">
+		<javac srcdir="${src}" destdir="${build.classes}" includeantruntime="false" debug="true" debuglevel="lines,source">
+                        <compilerarg value="-Xlint:unchecked" />
+			<classpath location="${ig.lib}/InfiniteGraph.jar"/>
+			<classpath location="${tools}/commons-cli-1.2.jar"/>
+			<classpath location="${tools}/json-simple-1.1.1.jar"/>
+			<classpath location="${tools}/opencsv-2.0.jar"/>
+		</javac>
+	</target>
+ 
+    <target name="task-jar" depends="compile" description="Generate bootstrap main.">
+                <jar jarfile="${pipeline.dir}/benchmark_tasks.jar" basedir="${build.classes}">
+                        <manifest>
+                                <attribute name="Built-By" value="${user.name}" />
+                                <attribute name="Class-Path" value="
+                                ${tools}/commons-cli-1.2.jar 
+                                ${tools}/json-simple-1.1.1.jar
+                                ${ig.lib}/InfiniteGraph.jar 
+                                ${ig.lib}/oojava.jar
+                                ${ig.lib}/slf4j-simple-1.6.1.jar"/>
+                        </manifest>
+                </jar>  
+        </target>
+
+ 
+  <target name="bootstrap-jar" depends="compile" description="Generate bootstrap main.">
+                <jar jarfile="${build.dir}/bootstrap.jar" basedir="${build.classes}">
+                        <manifest>
+                                <attribute name="Built-By" value="${user.name}" />
+                                <attribute name="Main-Class" value="com.whois.WBNP.operations.Bootstrap"/>
+                                <attribute name="Class-Path" value="
+                                ${tools}/commons-cli-1.2.jar 
+                                ${tools}/json-simple-1.1.1.jar
+                                ${ig.lib}/InfiniteGraph.jar 
+                                ${ig.lib}/oojava.jar
+                                ${ig.lib}/slf4j-simple-1.6.1.jar"/>
+                        </manifest>
+                </jar>  
+        </target>
+
+        <target name="benchmark-jar" depends="compile" description="Generate ingest utility.">
+                <jar jarfile="${build.dir}/benchmark.jar" basedir="${build.classes}">
+                        <manifest>
+                                <attribute name="Built-By" value="${user.name}" />
+                                <attribute name="Main-Class" value="com.whois.WBNP.operations.Benchmark"/>
+                                <attribute name="Class-Path" value="
+                                ${tools}/commons-cli-1.2.jar 
+                                ${tools}/json-simple-1.1.1.jar
+                                
+                                ${ig.lib}/InfiniteGraph.jar 
+                                ${ig.lib}/oojava.jar
+                                ${ig.lib}/slf4j-simple-1.6.1.jar"/>
+                        </manifest>
+                </jar>  
+        </target>
+
+	<target name="all" depends="bootstrap-jar,benchmark-jar,task-jar" description="Build all targets (clean,jar).">
+	</target>
+</project>
+

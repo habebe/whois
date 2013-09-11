@@ -1,6 +1,9 @@
 *.class
-
+data
+build
+pipeline
 # Package Files #
 *.jar
 *.war
 *.ear
+*~
