@@ -9,9 +9,16 @@ public class NameServerTask extends ConnectTask
 	super(term,domainId);
     }
         
+    protected String getClassName()
+    {
+	return com.whois.WBNP.model.vertex.NameServer.class.getName();
+    }
+
+
     protected com.infinitegraph.BaseVertex addVertex(com.infinitegraph.pipelining.TaskContext taskContext,
 						     com.infinitegraph.GraphDatabase database)
     {
+
 	com.whois.WBNP.model.vertex.NameServer object = new com.whois.WBNP.model.vertex.NameServer();
 	object.set_name(this.getQueryTerm());
 	database.addVertex(object);
@@ -36,7 +43,7 @@ public class NameServerTask extends ConnectTask
     {
 	this.vertex = this.query(taskContext,database,
 				 com.whois.WBNP.model.vertex.NameServer.class.getName(),
-				 String.format("(name == \"%s\"",this.getQueryTerm()));
+				 String.format("(name == \"%s\")",this.getQueryTerm()));
 	if(this.vertex != null)
 	    return 1;
 	return 0;

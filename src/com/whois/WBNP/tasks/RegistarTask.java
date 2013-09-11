@@ -8,6 +8,11 @@ public class RegistarTask extends ConnectTask
     {
 	super(term,domainId);
     }
+
+    protected String getClassName()
+    {
+	return com.whois.WBNP.model.vertex.Registrar.class.getName();
+    }
         
     protected com.infinitegraph.BaseVertex addVertex(com.infinitegraph.pipelining.TaskContext taskContext,
 						     com.infinitegraph.GraphDatabase database)
@@ -36,7 +41,7 @@ public class RegistarTask extends ConnectTask
     {
 	this.vertex = this.query(taskContext,database,
 				 com.whois.WBNP.model.vertex.Registrar.class.getName(),
-				 String.format("(name == \"%s\"",this.getQueryTerm()));
+				 String.format("(name == \"%s\")",this.getQueryTerm()));
 	if(this.vertex != null)
 	    return 1;
 	return 0;

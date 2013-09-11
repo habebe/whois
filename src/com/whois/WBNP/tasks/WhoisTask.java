@@ -169,6 +169,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			this.nameServerNodes[i] = this.query(taskContext,database,
 							     com.whois.WBNP.model.vertex.Registrar.class.getName(),
 							     String.format("(name == \"%s\")",nameServers[i]));
+			this.nameServerNodes[i].data = nameServers[i];
 		    }
 	    }
     }
@@ -291,6 +292,14 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		gsd.getPlacementWorker().setPolicies(null);
 		
 		com.infinitegraph.GraphDatabase database = taskContext.getGraph();
+		VertexIDEntry entry = this.getDataForTarget(taskContext,
+							    com.whois.WBNP.model.vertex.Domain.class.getName(),
+							    getQueryTerm());
+		if((entry != null) && (entry.id > 0))
+		    {
+			this.domainNode.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+			this.checkConnectivity();
+		    }
 		if(this.domainNode.vertex == null)
 		    {
 			com.whois.WBNP.model.vertex.Domain domain = new com.whois.WBNP.model.vertex.Domain();
@@ -361,8 +370,15 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			    {
 				if(nameServer.vertex == null)
 				    {
-					NameServerTask subTask = new NameServerTask(this.getCountry(),this.domainNode.vertex.getId());
-					database.submitPipelineTask(subTask);
+					if(nameServer.data != null)
+					    {
+						nameServer.data = nameServer.data.trim();
+						if(nameServer.data.length() > 0)
+						    {
+							NameServerTask subTask = new NameServerTask(nameServer.data,this.domainNode.vertex.getId());
+							database.submitPipelineTask(subTask);
+						    }
+					    }
 				    }
 				else if(nameServer.connected == false)
 				    {

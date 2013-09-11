@@ -115,6 +115,7 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 							      com.infinitegraph.GraphDatabase database);
     protected abstract void createConnection(com.infinitegraph.GraphDatabase database);
     protected abstract int  performQuery(com.infinitegraph.pipelining.TaskContext taskContext,com.infinitegraph.GraphDatabase database);
+    protected abstract String getClassName();
     
     protected void checkConnectivity()
     {
@@ -143,7 +144,16 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 	gsd.getPlacementWorker().setPolicies(null);
 	if(this.vertex == null)
 	    {
-		this.vertex = this.addVertex(taskContext,database);
+		VertexIDEntry entry = this.getDataForTarget(taskContext,
+							    getClassName(),
+							    getQueryTerm());
+		if((entry != null) && (entry.id > 0))
+		    {
+			this.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+			this.checkConnectivity();
+		    }
+		if(this.vertex == null)
+		    this.vertex = this.addVertex(taskContext,database);
 	    }
 	if(this.connected == false)
 	    {

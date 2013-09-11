@@ -23,6 +23,11 @@ public class IpTask extends ConnectTask
 	return this.volume;
     }
 
+    protected String getClassName()
+    {
+	return com.whois.WBNP.model.vertex.Ip.class.getName();
+    }
+
     protected com.infinitegraph.BaseVertex addVertex(com.infinitegraph.pipelining.TaskContext taskContext,
 						     com.infinitegraph.GraphDatabase database)
     {
@@ -51,7 +56,7 @@ public class IpTask extends ConnectTask
     {
 	this.vertex = this.query(taskContext,database,
 				 com.whois.WBNP.model.vertex.Ip.class.getName(),
-				 String.format("(ip == \"%s\"",this.getQueryTerm()));
+				 String.format("(ip == \"%s\")",this.getQueryTerm()));
 	if(this.vertex != null)
 	    return 1;
 	return 0;
@@ -84,8 +89,17 @@ public class IpTask extends ConnectTask
 	com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph.getSessionData(taskContext.getSession());
 	gsd.getPlacementWorker().setPolicies(null);
 	if(this.vertex == null)
-	    {
-		this.vertex = this.addVertex(taskContext,database);
+	    {	
+		VertexIDEntry entry = this.getDataForTarget(taskContext,
+							    getClassName(),
+							    getQueryTerm());
+		if((entry != null) && (entry.id > 0))
+		    {
+			this.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+			this.checkConnectivity();
+		    }
+		if(this.vertex == null)
+		    this.vertex = this.addVertex(taskContext,database);
 	    }
 	if(ipDomainEdge == null)
 	    {
