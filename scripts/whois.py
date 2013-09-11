@@ -54,10 +54,10 @@ def main(inputFileName,outputFileName,header):
         except:
             print "ERROR",row
             pass
-        outputFile.close()
-        inputFile.close()
-        return True
-    return False
+        pass
+    outputFile.close()
+    inputFile.close()
+    return True
 
 
 main(sys.argv[1],sys.argv[2],int(sys.argv[3]))
