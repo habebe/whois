@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<PMD pmdSchemaVersion="1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="PMD.xsd">
+  <IndexTypesSnapshot>
+    <IndexType
+      name="Traditional"
+      description="Traditional Objectivity built-in index."
+      isOrdered="true"
+      duplicatesAreAllowed="true"
+      supportsRangeAccess="true">
+      <KeyCharacteristics
+        allAttributesAreRequired="false"
+        attributesAreOrdered="true"
+        minimumNumberOfAttributes="1" maximumNumberOfAttributes="0">
+        <SupportedAttributeTypes>
+          <Numeric/>
+          <String/>
+        </SupportedAttributeTypes>
+      </KeyCharacteristics>
+    </IndexType>
+  </IndexTypesSnapshot>
+  <SchemaSnapshot/>
+  <PlacementModel
+    name="Application"
+    version="1" status="Current" id="19140302711816193">
+    <ChangeLog>
+      <ChangeLogItem user="jdoe" timestamp="2012-06-19T16:28:56" logMessage="Created"/>
+    </ChangeLog>
+    <!--<KeySpecifications>
+      <KeySpecification name="Domain-Key" keyedClass="com.whois.WBNP.model.vertex.Domain">
+        <KeyedAttribute attributeName="name"/>
+      </KeySpecification> 
+      <KeySpecification name="Country-Key" keyedClass="com.whois.WBNP.model.vertex.Country">
+        <KeyedAttribute attributeName="name"/>
+      </KeySpecification> 
+      <KeySpecification name="Registrar-Key" keyedClass="com.whois.WBNP.model.vertex.Registrar">
+        <KeyedAttribute attributeName="name"/>
+      </KeySpecification> 
+      <KeySpecification name="Email-Key" keyedClass="com.whois.WBNP.model.vertex.Email">
+        <KeyedAttribute attributeName="name"/>
+      </KeySpecification> 
+      <KeySpecification name="NameSrvr-Key" keyedClass="com.whois.WBNP.model.vertex.NameServer">
+        <KeyedAttribute attributeName="name"/>
+      </KeySpecification>
+    </KeySpecifications>
+    <IndexSpecifications>
+      <IndexSpecification name="Domain-Index" keySpecification="Domain-Key" isUnique="false" indexedClass="com.whois.WBNP.model.vertex.Domain"/>
+      <IndexSpecification name="Country-Index" keySpecification="Country-Key" isUnique="false" indexedClass="com.whois.WBNP.model.vertex.Country"/>
+      <IndexSpecification name="Registrar-Index" keySpecification="Registrar-Key" isUnique="false" indexedClass="com.whois.WBNP.model.vertex.Registrar"/>
+      <IndexSpecification name="Email-Index" keySpecification="Email-Key" isUnique="false" indexedClass="com.whois.WBNP.model.vertex.Email"/>
+      <IndexSpecification name="NameSrvr-Index" keySpecification="NameSrvr-Key" isUnique="false" indexedClass="com.whois.WBNP.model.vertex.NameServer"/>
+    </IndexSpecifications>-->
+    <DatabasePlacers/>
+    <ContainerPlacers>
+      <ContainerPlacer
+        name="Default"
+        description="Default placer used for placing containers when no specific container placer is specified"
+        placeInto="OwnScope">
+        <Scope>
+          <SingleDatabaseGroup/>
+          <DatabaseGroupConfiguration
+            selection="Any">
+            <DatabaseConfiguration
+              databasePageSize="8192"/>
+          </DatabaseGroupConfiguration>
+        </Scope>
+      </ContainerPlacer>
+      <ContainerPlacer
+        name="Country"
+        placeInto="OwnScope">
+        <Scope>
+          <SingleDatabaseGroup/>
+          <DatabaseGroupConfiguration
+            selection="Any">
+            <DatabaseConfiguration
+              databasePageSize="8192"/>
+          </DatabaseGroupConfiguration>
+        </Scope>
+      </ContainerPlacer>
+      <ContainerPlacer
+        name="CountryRelated"
+        placeInto="RelatedObjectScope">
+      </ContainerPlacer>
+    </ContainerPlacers>
+    <ObjectPlacers>
+      <ObjectPlacer
+        name="Default"
+        description="Default placer used for placing objects when no specific object placer is specified"
+        placeInto="OwnScope"
+        placeOnNewPage="false"
+        containerPlacer="Default">
+        <Scope>
+          <SingleContainerGroup/>
+          <ContainerGroupConfiguration
+            selection="Any">
+            <ContainerConfiguration
+              growByPolicy="PercentageOfCurrentSize" growBy="100"
+              initialNumberOfPages="10" pageLimit="50000"
+              placeInOwnFile="false"
+              maintainObjectCounts="true"/>
+          </ContainerGroupConfiguration>
+        </Scope>
+      </ObjectPlacer>
+      <ObjectPlacer name="Domain" placeOnNewPage="false" placeInto="OwnScope" containerPlacer="CountryRelated">
+        <Scope>
+          <SingleContainerGroup/>
+          <ContainerGroupConfiguration
+            selection="Any">
+            <ContainerConfiguration
+              growByPolicy="PercentageOfCurrentSize" growBy="100"
+              initialNumberOfPages="10" pageLimit="50000"
+              placeInOwnFile="false"
+              maintainObjectCounts="true">
+            </ContainerConfiguration>
+          </ContainerGroupConfiguration>
+          <ContainerAcquisitionPolicy waitPolicy="NoWait" actionOnTimeout="CreateNewContainer"/>
+        </Scope>
+      </ObjectPlacer>
+      <ObjectPlacer name="DomainRelated" placeInto="RelatedObjectScope"/>
+      <ObjectPlacer name="Registrar" placeOnNewPage="false" placeInto="OwnScope" containerPlacer="CountryRelated">
+        <Scope>
+          <SingleContainerGroup/>
+          <ContainerGroupConfiguration
+            selection="Any">
+            <ContainerConfiguration
+              growByPolicy="PercentageOfCurrentSize" growBy="100"
+              initialNumberOfPages="10" pageLimit="50000"
+              placeInOwnFile="false"
+              maintainObjectCounts="true">
+            </ContainerConfiguration>
+          </ContainerGroupConfiguration>
+          <ContainerAcquisitionPolicy waitPolicy="NoWait" actionOnTimeout="CreateNewContainer"/>
+        </Scope>
+      </ObjectPlacer>
+      <ObjectPlacer name="Country" placeOnNewPage="false" placeInto="OwnScope" containerPlacer="Country">
+        <Scope>
+          <SingleContainerGroup/>
+          <ContainerGroupConfiguration
+            selection="Any">
+            <ContainerConfiguration
+              growByPolicy="PercentageOfCurrentSize" growBy="100"
+              initialNumberOfPages="10" pageLimit="50000"
+              placeInOwnFile="false"
+              maintainObjectCounts="true"/>
+          </ContainerGroupConfiguration>
+          <ContainerAcquisitionPolicy waitPolicy="NoWait" actionOnTimeout="CreateNewContainer"/>
+        </Scope>
+      </ObjectPlacer>
+      <ObjectPlacer name="Email" placeOnNewPage="false" placeInto="OwnScope" containerPlacer="CountryRelated">
+        <Scope>
+          <SingleContainerGroup/>
+          <ContainerGroupConfiguration
+            selection="Any">
+            <ContainerConfiguration
+              growByPolicy="PercentageOfCurrentSize" growBy="100"
+              initialNumberOfPages="10" pageLimit="50000"
+              placeInOwnFile="false"
+              maintainObjectCounts="true">
+            </ContainerConfiguration>
+          </ContainerGroupConfiguration>
+          <ContainerAcquisitionPolicy waitPolicy="NoWait" actionOnTimeout="CreateNewContainer"/>
+        </Scope>
+      </ObjectPlacer>
+      <ObjectPlacer name="EmailRelated" placeInto="RelatedObjectScope"/>
+      <ObjectPlacer name="NameServer" placeOnNewPage="false" placeInto="OwnScope" containerPlacer="CountryRelated">
+        <Scope>
+          <SingleContainerGroup/>
+          <ContainerGroupConfiguration
+            selection="Any">
+            <ContainerConfiguration
+              growByPolicy="PercentageOfCurrentSize" growBy="100"
+              initialNumberOfPages="10" pageLimit="50000"
+              placeInOwnFile="false"
+              maintainObjectCounts="true">
+            </ContainerConfiguration>
+          </ContainerGroupConfiguration>
+          <ContainerAcquisitionPolicy waitPolicy="NoWait" actionOnTimeout="CreateNewContainer"/>
+        </Scope>
+      </ObjectPlacer>
+    </ObjectPlacers>
+    <Rules>
+      <Rule objectClass="com.whois.WBNP.model.vertex.Country" objectPlacer="Country"/>
+      <Rule objectClass="com.whois.WBNP.model.vertex.Registrar" objectPlacer="Registrar">
+        <PlacementRelationship relatedClass="com.whois.WBNP.model.vertex.Country"/>
+      </Rule>
+      <Rule objectClass="com.whois.WBNP.model.vertex.Domain" objectPlacer="Domain">
+        <PlacementRelationship relatedClass="com.whois.WBNP.model.vertex.Country"/>
+      </Rule>
+      <Rule objectClass="com.whois.WBNP.model.vertex.Email" objectPlacer="Email">
+        <PlacementRelationship relatedClass="com.whois.WBNP.model.vertex.Country"/>
+      </Rule>
+      <Rule objectClass="com.whois.WBNP.model.vertex.NameServer" objectPlacer="NameServer">
+        <PlacementRelationship relatedClass="com.whois.WBNP.model.vertex.Country"/>
+      </Rule>
+      <Rule objectClass="com.whois.WBNP.model.edge.OwnerRegistrar" objectPlacer="DomainRelated">
+      	<PlacementRelationship relatedClass="com.whois.WBNP.model.vertex.Domain"/>
+      </Rule>
+      <Rule objectClass="com.whois.WBNP.model.edge.OwnerEmail" objectPlacer="EmailRelated">
+        <PlacementRelationship relatedClass="com.whois.WBNP.model.vertex.Email"/>
+      </Rule>
+      <Rule objectClass="com.whois.WBNP.model.edge.OwnerCountry" objectPlacer="DomainRelated">
+        <PlacementRelationship relatedClass="com.whois.WBNP.model.vertex.Domain"/>
+      </Rule>
+      <Rule objectClass="com.whois.WBNP.model.edge.NameServerEdge" objectPlacer="DomainRelated">
+        <PlacementRelationship relatedClass="com.whois.WBNP.model.vertex.Domain"/>
+      </Rule>
+    </Rules>
+  </PlacementModel>
+</PMD>
