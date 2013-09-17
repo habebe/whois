@@ -18,8 +18,8 @@ public class WebOperation extends com.objectivity.ig.utility.DatasetOperation
 	    {
 		this.status = true;
 		domain     = data[1];
-		ip         = data[2];
-		volume     = Double.parseDouble(data[3]);
+		ip         = data[3];
+		volume     = Double.parseDouble(data[2]);
 		//System.out.printf("D(%s) R(%s) E(%s) N(%s) C(%s)\n",domain,registar,email,nameServer,country);
 	    }
 	
