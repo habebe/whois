@@ -117,7 +117,7 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
 									   String.format("(name == \"%s\")",this.getQueryTerm()));
 	this.ipVertex     = (com.whois.WBNP.model.vertex.Ip)this.query(taskContext,database,
 								       com.whois.WBNP.model.vertex.Ip.class.getName(),
-								       String.format("(name == \"%s\")",this.getIp()));
+								       String.format("(ip == \"%s\")",this.getIp()));
     }
 
     static long IpDomainTypeId   = -1;

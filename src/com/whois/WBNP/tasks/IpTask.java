@@ -76,9 +76,19 @@ public class IpTask extends ConnectTask
 	return 0;
     }
 
+    
     protected void checkConnectivity()
     {
 	if(this.vertex != null)
+	    {
+		if(this.vertex.isNeighbor(domainId))
+		    {
+			java.util.List<com.infinitegraph.EdgeHandle> edges = this.vertex.findEdgesToNeighbor(domainId);
+			ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain)edges.get(0).getEdge();
+		    }
+	    }
+	/*
+	  if(this.vertex != null)
 	    {
 		
 		for(com.infinitegraph.EdgeHandle edgeHandle : this.vertex.getEdges())
@@ -92,6 +102,7 @@ public class IpTask extends ConnectTask
 			    }
 		    }
 	    }
+	*/
     }
 
 

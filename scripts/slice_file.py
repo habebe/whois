@@ -12,7 +12,12 @@ def read(fileName,limit):
         counter += 1
         done = (len(line) == 0) or (counter > limit)
         if not done:
-            print >> fout,line,
+            if line.find("=") == -1:
+                if line.find("%") == -1:
+                    print >> fout,line,
+                    pass
+                pass
+            pass
         line = fin.readline()
         pass
     pass
