@@ -132,21 +132,16 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
     {
 	if((domainVertex != null) && (ipVertex != null))
 	    {
-		this.initializeEdgeTypes(database);
-		for(com.infinitegraph.EdgeHandle edgeHandle : domainVertex.getEdges())
-		    {
-			long edgeType = edgeHandle.getTypeId();
-			if(edgeType == WebTask.IpDomainTypeId)
-			    {
-				
-				com.infinitegraph.VertexHandle vertexHandle = edgeHandle.getPeer();
-				if(ipVertex.getId() == vertexHandle.getId())
-				    {
-					this.ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain)edgeHandle.getEdge();
-					return;
-				    }
-			    }
-		    }
+		long time = System.nanoTime();
+		long id = ipVertex.getId();
+		if(this.domainVertex.isNeighbor(id))
+                    {
+                        java.util.List<com.infinitegraph.EdgeHandle> edges = this.domainVertex.findEdgesToNeighbor(id);
+                        ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain)edges.get(0).getEdge();
+                    }
+		time = (System.nanoTime()-time);
+		int size = this.domainVertex.getHandle().getEdgeCount();
+                logger.info(String.format("C,%d,%d,%d",time,WebTask.ProcessCounter,size));
 	    }
     }
 
@@ -157,17 +152,18 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
     {
 	WebTask.PreProcessCounter += 1;
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
-	logger.info(String.format("D,0,%d,%d",System.currentTimeMillis(),WebTask.PreProcessCounter));
+	long time = System.nanoTime();
 	this.performQuery(taskContext,database);
 	this.checkConnectivity(database);
-	logger.info(String.format("D,1,%d,%d",System.currentTimeMillis(),WebTask.PreProcessCounter));
+	time = (System.nanoTime() - time);
+	logger.info(String.format("A,%d,%d",time,WebTask.PreProcessCounter));
     }
     
     @Override
     public void process(com.infinitegraph.pipelining.TaskContext taskContext)
     {
 	WebTask.ProcessCounter += 1;
-	logger.info(String.format("D,2,%d,%d",System.currentTimeMillis(),WebTask.ProcessCounter));
+	long time = System.nanoTime();
 	com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph.getSessionData(taskContext.getSession());
 	gsd.getPlacementWorker().setPolicies(null);
 	
@@ -205,7 +201,8 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
 		IpTask subTask = new IpTask(this.getIp(),this.domainVertex.getId(),this.getVolume());
 		database.submitPipelineTask(subTask);
 	    }
-	logger.info(String.format("D,3,%d,%d",System.currentTimeMillis(),WebTask.ProcessCounter));
+	time  = (System.nanoTime() - time);
+	logger.info(String.format("B,%d,%d",time,WebTask.ProcessCounter));
     }
 	
 

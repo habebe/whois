@@ -3,7 +3,7 @@ import com.infinitegraph.*;
 import com.infinitegraph.impl.plugins.pwp.pipelining.*;
 import com.infinitegraph.impl.*;
 import com.objy.db.app.*;
-import com.objy.db.internal.configuration.*;
+//import com.objy.db.internal.configuration.*;
 import org.slf4j.*;
 
 
@@ -43,17 +43,19 @@ public class PrimePipeline
 		    tx.complete();
 	    }
     }
-    
+    /*
     private static int getNumberOfLocations(String bootFilePath)
     {
-	ParameterValueGroup values = new ParameterValueGroup();
-	values.addValue(ObjectivityTools.SWITCH_BOOT, bootFilePath);
+	com.objy.db.internal.tools.ToolParameters values = new com.objy.db.internal.tools.ToolParameters();
+
+	//	ParameterValueGroup values = new ParameterValueGroup();
+	values.add(ObjectivityTools.SWITCH_BOOT, bootFilePath);
 	String result = ObjectivityTools.executeUTICommand(ObjectivityTools.COMMAND_LIST_STORAGE, values);
 	String[] lines = result.split("\r\n|\r|\n");
 	System.out.printf("lines %d\n",lines.length);
 	//int numDefaultLines = 9; // Number of Default Lines in liststorage command
 	return lines.length;
-    }
+	}*/
 
     public static void prime(GraphDatabase database)
     {

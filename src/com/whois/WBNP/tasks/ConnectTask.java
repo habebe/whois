@@ -142,10 +142,11 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
     {
 	ConnectTask.PreProcessCounter += 1;
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
-	logger.info(String.format("C,0,%d,%d",System.currentTimeMillis(),ConnectTask.PreProcessCounter));
+	long time = System.nanoTime();
 	if(this.performQueryUsingQualifier(taskContext,database) > 0)
 	    this.checkConnectivity();
-	logger.info(String.format("C,1,%d,%d",System.currentTimeMillis(),ConnectTask.PreProcessCounter));
+	time = (System.nanoTime() - time);
+	logger.info(String.format("D,%d,%d",time,ConnectTask.PreProcessCounter));
     }
 
     static public com.objy.query.ObjectQualifier CountryObjectQualifier = null;

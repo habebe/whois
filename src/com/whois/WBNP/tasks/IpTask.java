@@ -81,11 +81,15 @@ public class IpTask extends ConnectTask
     {
 	if(this.vertex != null)
 	    {
+		long time = System.nanoTime();
 		if(this.vertex.isNeighbor(domainId))
 		    {
 			java.util.List<com.infinitegraph.EdgeHandle> edges = this.vertex.findEdgesToNeighbor(domainId);
 			ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain)edges.get(0).getEdge();
 		    }
+		time = (System.nanoTime()-time);
+		int size = this.vertex.getHandle().getEdgeCount();
+		logger.info(String.format("C,%d,%d,%d",time,ConnectTask.ProcessCounter,size));
 	    }
 	/*
 	  if(this.vertex != null)
@@ -109,7 +113,7 @@ public class IpTask extends ConnectTask
     public void process(com.infinitegraph.pipelining.TaskContext taskContext)
     {
 	ConnectTask.ProcessCounter += 1;
-	logger.info(String.format("C,2,%d,%d",System.currentTimeMillis(),ConnectTask.ProcessCounter));
+	long time = System.nanoTime();
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 	com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph.getSessionData(taskContext.getSession());
 	gsd.getPlacementWorker().setPolicies(null);
@@ -120,12 +124,13 @@ public class IpTask extends ConnectTask
 							    getQueryTerm());
 		if((entry != null) && (entry.id > 0))
 		    {
-			this.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+ 			this.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
 			this.checkConnectivity();
 		    }
 		if(this.vertex == null)
 		    this.vertex = this.addVertex(taskContext,database);
 	    }
+	long timeA = (System.nanoTime() - time);
 	if(ipDomainEdge == null)
 	    {
 		this.createConnection(database);
@@ -134,6 +139,8 @@ public class IpTask extends ConnectTask
 	    {
 		ipDomainEdge.set_volume(ipDomainEdge.get_volume() + this.getVolume());
 	    }
-	logger.info(String.format("C,3,%d,%d",System.currentTimeMillis(),ConnectTask.ProcessCounter));
+	time = (System.nanoTime() - time);
+	logger.info(String.format("E,%d,%d",timeA,ConnectTask.ProcessCounter));
+	logger.info(String.format("F,%d,%d",time,ConnectTask.ProcessCounter));
     }
 }   
