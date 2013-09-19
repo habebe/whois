@@ -134,11 +134,9 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
 	    {
 		long time = System.nanoTime();
 		long id = ipVertex.getId();
-		if(this.domainVertex.isNeighbor(id))
-                    {
-                        java.util.List<com.infinitegraph.EdgeHandle> edges = this.domainVertex.findEdgesToNeighbor(id);
-                        ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain)edges.get(0).getEdge();
-                    }
+		com.infinitegraph.EdgeHandle handle = this.domainVertex.getEdgeToNeighbor(id);
+                if(handle != null)
+                    ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain)handle.getEdge();
 		time = (System.nanoTime()-time);
 		int size = this.domainVertex.getHandle().getEdgeCount();
                 logger.info(String.format("C,%d,%d,%d",time,WebTask.ProcessCounter,size));
