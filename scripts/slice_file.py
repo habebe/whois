@@ -14,7 +14,17 @@ def read(fileName,limit):
         if not done:
             if line.find("=") == -1:
                 if line.find("%") == -1:
-                    print >> fout,line,
+                    data = line.split(";")
+                    L = ""
+                    lcounter = 0
+                    for i in data:
+                        L += i.strip()
+                        lcounter += 1
+                        if lcounter < len(data):
+                            L += ";"
+                            pass
+                        pass
+                    print >>fout,L
                     pass
                 pass
             pass

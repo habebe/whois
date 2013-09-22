@@ -204,8 +204,8 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
 	WebTask.PreProcessCounter += 1;
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 	long time = System.nanoTime();
-	this.performQuery(taskContext,database);
-	//this.performQueryUsingQualifier(taskContext,database);
+	//this.performQuery(taskContext,database);
+	this.performQueryUsingQualifier(taskContext,database);
 	this.checkConnectivity(database);
 	time = (System.nanoTime() - time);
 	logger.info(String.format("A,%d,%d",time,WebTask.PreProcessCounter));
