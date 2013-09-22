@@ -202,8 +202,8 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	return node;
     }
 
-    private void performQueryQualifier(com.infinitegraph.pipelining.TaskContext taskContext,
-				       com.infinitegraph.GraphDatabase database)
+    private void performQueryUsingQualifier(com.infinitegraph.pipelining.TaskContext taskContext,
+					    com.infinitegraph.GraphDatabase database)
     {
 	this.initializeQualifiers();
 	this.domainNode    = this.query(taskContext,database,
@@ -373,7 +373,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	WhoisTask.PreProcessCounter += 1;
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 	logger.info(String.format("D,0,%d,%d",System.currentTimeMillis(),WhoisTask.PreProcessCounter));
-	this.performQueryQualifier(taskContext,database);
+	this.performQueryUsingQualifier(taskContext,database);
 	if(this.numberOfNodesFound > 0)
 	    {
 		this.initializeEdgeTypes(database);

@@ -107,6 +107,53 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
 	    }
 	return vertex;
     }
+    static com.objy.query.ObjectQualifier DomainObjectQualifier = null;
+    static com.objy.query.ObjectQualifier IpObjectQualifier = null;
+    static void initializeQualifiers()
+    {
+        if(DomainObjectQualifier == null)
+            {
+                DomainObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Domain.class.getName(),"(name == $A:string)");
+                IpObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Ip.class.getName(),"(ip == $A:string)");
+	    }
+    }
+
+    private com.infinitegraph.BaseVertex query(com.infinitegraph.pipelining.TaskContext taskContext,
+                       com.infinitegraph.GraphDatabase database,
+                       String className,String queryTerm,
+                       com.objy.query.ObjectQualifier qualifier
+                       )
+    {
+        com.infinitegraph.BaseVertex vertex = null;
+        if(queryTerm != null)
+            {
+                VertexIDEntry entry = this.getDataForTarget(taskContext,className,queryTerm);
+                if(entry != null)
+                    {
+                        if(entry.id > 0)
+                            vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+                    }
+                else
+                    {
+                        qualifier.setStringVarValue("A",queryTerm);
+                        com.objy.db.app.Iterator iterator = taskContext.getSession().getFD().scan(className,qualifier);
+                        if(iterator.hasNext())
+                            {
+                                vertex = (com.infinitegraph.BaseVertex)iterator.next();
+                            }
+                        if(vertex != null)
+                            this.setDataForTarget(taskContext,className,
+                                                  queryTerm,
+                                                  new VertexIDEntry(vertex.getId()));
+                        else
+                            this.setDataForTarget(taskContext,className,
+                                                  queryTerm,
+                                                  new VertexIDEntry(-1));
+                    }
+            }
+        return vertex;
+    }
+
 
     private void performQuery(com.infinitegraph.pipelining.TaskContext taskContext,
 			      com.infinitegraph.GraphDatabase database)
@@ -120,6 +167,21 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
 								       String.format("(ip == \"%s\")",this.getIp()));
     }
 
+    private void performQueryUsingQualifier(com.infinitegraph.pipelining.TaskContext taskContext,
+					    com.infinitegraph.GraphDatabase database)
+    {
+        this.initializeQualifiers();
+        this.domainVertex    = (com.whois.WBNP.model.vertex.Domain)this.query(taskContext,database,
+									      com.whois.WBNP.model.vertex.Domain.class.getName(),
+									      this.getQueryTerm(),
+									      DomainObjectQualifier
+									      );
+        this.ipVertex   = (com.whois.WBNP.model.vertex.Ip)this.query(taskContext,database,
+								     com.whois.WBNP.model.vertex.Ip.class.getName(),
+								     this.getIp(),
+								     IpObjectQualifier
+								     );
+    }
     static long IpDomainTypeId   = -1;
     private static void initializeEdgeTypes(com.infinitegraph.GraphDatabase database)
     {
@@ -152,6 +214,7 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 	long time = System.nanoTime();
 	this.performQuery(taskContext,database);
+	//this.performQueryUsingQualifier(taskContext,database);
 	this.checkConnectivity(database);
 	time = (System.nanoTime() - time);
 	logger.info(String.format("A,%d,%d",time,WebTask.PreProcessCounter));
