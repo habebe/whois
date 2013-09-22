@@ -23,37 +23,28 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
     private String Email;
     private String NameServerStatement;
 
-    class VertexIDEntry
-    {
-	public long id;
-	public VertexIDEntry(long id)
-	{
-	    this.id = id;	
-	}
-    }	
-
     @SuppressWarnings("unchecked")
-    private java.util.HashMap<String,VertexIDEntry> getTargetEntryMap(com.infinitegraph.pipelining.TaskContext taskContext,
+    private java.util.HashMap<String,Long> getTargetEntryMap(com.infinitegraph.pipelining.TaskContext taskContext,
 								      String className) 
     {
-	java.util.HashMap<String,VertexIDEntry> map = (java.util.HashMap<String,VertexIDEntry>)taskContext.getTaskGroupData(className);
+	java.util.HashMap<String,Long> map = (java.util.HashMap<String,Long>)taskContext.getTaskGroupData(className);
 	if(map == null) 
 	    {
-		map = new java.util.HashMap<String,VertexIDEntry>();
+		map = new java.util.HashMap<String,Long>();
 		taskContext.setTaskGroupData(className,map);
 	    }
 	return map;
     }	
 
-    private VertexIDEntry getDataForTarget(com.infinitegraph.pipelining.TaskContext taskContext,String className,String targetKey)
+    private Long getDataForTarget(com.infinitegraph.pipelining.TaskContext taskContext,String className,String targetKey)
     {
-    	java.util.HashMap<String,VertexIDEntry> map = this.getTargetEntryMap(taskContext,className);
+    	java.util.HashMap<String,Long> map = this.getTargetEntryMap(taskContext,className);
         return map.get(targetKey);
     }
         
-    private VertexIDEntry setDataForTarget(com.infinitegraph.pipelining.TaskContext taskContext, String className,String targetKey,VertexIDEntry entry)
+    private Long setDataForTarget(com.infinitegraph.pipelining.TaskContext taskContext, String className,String targetKey,Long entry)
     {
-        java.util.HashMap<String,VertexIDEntry> map = this.getTargetEntryMap(taskContext,className);
+        java.util.HashMap<String,Long> map = this.getTargetEntryMap(taskContext,className);
         return map.put(targetKey, entry);
     }
 	
@@ -129,12 +120,12 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	Node node = null;
 	if(queryTerm != null)
 	    {
-		VertexIDEntry entry = this.getDataForTarget(taskContext,className,queryTerm);
+		Long entry = this.getDataForTarget(taskContext,className,queryTerm);
 		node = new Node();
 		if(entry != null)
 		    {
-			if(entry.id > 0)
-			    node.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+			if(entry.longValue() > 0)
+			    node.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.longValue()));
 		    }
 		else
 		    {
@@ -147,11 +138,11 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			if(node.vertex != null)
 			    this.setDataForTarget(taskContext,className,
 						  queryTerm,
-						  new VertexIDEntry(node.vertex.getId()));
+						  new Long(node.vertex.getId()));
 			else
 			    this.setDataForTarget(taskContext,className,
 						  queryTerm,
-						  new VertexIDEntry(-1));
+						  new Long(-1));
 		    }
 		if(node.vertex != null)
 		    this.numberOfNodesFound += 1;
@@ -168,12 +159,12 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	Node node = null;
 	if(queryTerm != null)
 	    {
-		VertexIDEntry entry = this.getDataForTarget(taskContext,className,queryTerm);
+		Long entry = this.getDataForTarget(taskContext,className,queryTerm);
 		node = new Node();
 		if(entry != null)
 		    {
-			if(entry.id > 0)
-			    node.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+			if(entry.longValue() > 0)
+			    node.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.longValue()));
 		    }
 		else
 		    {
@@ -184,11 +175,11 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 				if(node.vertex != null)
 				    this.setDataForTarget(taskContext,className,
 							  queryTerm,
-							  new VertexIDEntry(node.vertex.getId()));
+							  new Long(node.vertex.getId()));
 				else
 				    this.setDataForTarget(taskContext,className,
 							  queryTerm,
-							  new VertexIDEntry(-1));
+							  new Long(-1));
 			    }
 			catch(com.infinitegraph.GraphException e)
 			    {
@@ -395,12 +386,12 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 		if(this.domainNode.vertex == null)
 		    {
-			VertexIDEntry entry = this.getDataForTarget(taskContext,
+			Long entry = this.getDataForTarget(taskContext,
 								    com.whois.WBNP.model.vertex.Domain.class.getName(),
 								    getQueryTerm());
-			if((entry != null) && (entry.id > 0))
+			if((entry != null) && (entry.longValue() > 0))
 			    {
-				this.domainNode.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+				this.domainNode.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.longValue()));
 				this.checkConnectivity();
 			    }
 		    }
@@ -413,7 +404,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			this.setDataForTarget(taskContext,
 					      com.whois.WBNP.model.vertex.Domain.class.getName(),
 					      this.getQueryTerm(),
-					      new VertexIDEntry(domain.getId()));
+					      new Long(domain.getId()));
 			domain.updateIndexes();
 		    }
 		if(this.countryNode != null)

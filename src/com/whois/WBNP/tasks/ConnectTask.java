@@ -7,37 +7,29 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
     protected long domainId;
     protected transient com.infinitegraph.BaseVertex vertex = null;
     protected transient boolean connected = false;
-    class VertexIDEntry
-    {
-	public long id;
-	public VertexIDEntry(long id)
-	{
-	    this.id = id;	
-	}
-    }	
-
+    
     @SuppressWarnings("unchecked")
-    protected java.util.HashMap<String,VertexIDEntry> getTargetEntryMap(com.infinitegraph.pipelining.TaskContext taskContext,String className) 
+    protected java.util.HashMap<String,Long> getTargetEntryMap(com.infinitegraph.pipelining.TaskContext taskContext,String className) 
     {
-	java.util.HashMap<String,VertexIDEntry> map = (java.util.HashMap<String,VertexIDEntry>)taskContext.getTaskGroupData(className);
+	java.util.HashMap<String,Long> map = (java.util.HashMap<String,Long>)taskContext.getTaskGroupData(className);
 	if(map == null) 
 	    {
-		map = new java.util.HashMap<String,VertexIDEntry>();
+		map = new java.util.HashMap<String,Long>();
 		taskContext.setTaskGroupData(className,map);
 	    }
 	return map;
     }	
 
-    protected VertexIDEntry getDataForTarget(com.infinitegraph.pipelining.TaskContext taskContext,String className,String targetKey)
+    protected Long getDataForTarget(com.infinitegraph.pipelining.TaskContext taskContext,String className,String targetKey)
     {
-    	java.util.HashMap<String,VertexIDEntry> map = this.getTargetEntryMap(taskContext,className);
+    	java.util.HashMap<String,Long> map = this.getTargetEntryMap(taskContext,className);
         return map.get(targetKey);
     }
     
-    protected VertexIDEntry setDataForTarget(com.infinitegraph.pipelining.TaskContext taskContext, 
-					     String className,String targetKey,VertexIDEntry entry)
+    protected Long setDataForTarget(com.infinitegraph.pipelining.TaskContext taskContext, 
+					     String className,String targetKey,Long entry)
     {
-        java.util.HashMap<String,VertexIDEntry> map = this.getTargetEntryMap(taskContext,className);
+        java.util.HashMap<String,Long> map = this.getTargetEntryMap(taskContext,className);
         return map.put(targetKey, entry);
     }
 	
@@ -68,11 +60,11 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 	com.infinitegraph.BaseVertex vertex = null;
 	if(queryTerm != null)
 	    {
-		VertexIDEntry entry = this.getDataForTarget(taskContext,className,queryTerm);
+		Long entry = this.getDataForTarget(taskContext,className,queryTerm);
 		if(entry != null)
 		    {
-			if(entry.id > 0)
-			    vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+			if(entry > 0)
+			    vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry));
 		    }
 		else
 		    {
@@ -85,11 +77,11 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 			if(vertex != null)
 			    this.setDataForTarget(taskContext,className,
 						  queryTerm,
-						  new VertexIDEntry(vertex.getId()));
+						  new Long(vertex.getId()));
 			else
 			    this.setDataForTarget(taskContext,className,
 						  queryTerm,
-						  new VertexIDEntry(-1));
+						  new Long(-1));
 		    }
 	    }
 	return vertex;
@@ -104,11 +96,11 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 	com.infinitegraph.BaseVertex vertex = null;
 	if(queryTerm != null)
 	    {
-		VertexIDEntry entry = this.getDataForTarget(taskContext,className,queryTerm);
+		Long entry = this.getDataForTarget(taskContext,className,queryTerm);
 		if(entry != null)
 		    {
-			if(entry.id > 0)
-			    vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+			if(entry > 0)
+			    vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry));
 		    }
 		else
 		    {
@@ -119,11 +111,11 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 				if(vertex != null)
 				    this.setDataForTarget(taskContext,className,
 							  queryTerm,
-							  new VertexIDEntry(vertex.getId()));
+							  new Long(vertex.getId()));
 				else
 				    this.setDataForTarget(taskContext,className,
 							  queryTerm,
-							  new VertexIDEntry(-1));
+							  new Long(-1));
 			    }
 			catch(com.infinitegraph.GraphException e)
 			    {
@@ -203,12 +195,12 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 	gsd.getPlacementWorker().setPolicies(null);
 	if(this.vertex == null)
 	    {
-		VertexIDEntry entry = this.getDataForTarget(taskContext,
-							    getClassName(),
-							    getQueryTerm());
-		if((entry != null) && (entry.id > 0))
+		Long entry = this.getDataForTarget(taskContext,
+						   getClassName(),
+						   getQueryTerm());
+		if((entry != null) && (entry > 0))
 		    {
-			this.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+			this.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry));
 			this.checkConnectivity();
 		    }
 		if(this.vertex == null)

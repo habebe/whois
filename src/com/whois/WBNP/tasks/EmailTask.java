@@ -23,7 +23,7 @@ public class EmailTask extends ConnectTask
 	this.setDataForTarget(taskContext,
 			      com.whois.WBNP.model.vertex.Email.class.getName(),
 			      this.getQueryTerm(),
-			      new VertexIDEntry(object.getId()));
+			      new Long(object.getId()));
 	object.updateIndexes();
 	return object;
     }

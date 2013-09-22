@@ -23,7 +23,7 @@ public class CountryTask extends ConnectTask
 	this.setDataForTarget(taskContext,
 			      com.whois.WBNP.model.vertex.Country.class.getName(),
 			      this.getQueryTerm(),
-			      new VertexIDEntry(country.getId()));
+			      new Long(country.getId()));
 	country.updateIndexes();
 	return country;
     }

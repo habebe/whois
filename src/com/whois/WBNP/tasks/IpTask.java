@@ -37,7 +37,7 @@ public class IpTask extends ConnectTask
 	this.setDataForTarget(taskContext,
 			      com.whois.WBNP.model.vertex.Ip.class.getName(),
 			      this.getQueryTerm(),
-			      new VertexIDEntry(object.getId()));
+			      new Long(object.getId()));
 	object.updateIndexes();
 	return object;
     }
@@ -124,12 +124,12 @@ public class IpTask extends ConnectTask
 	gsd.getPlacementWorker().setPolicies(null);
 	if(this.vertex == null)
 	    {	
-		VertexIDEntry entry = this.getDataForTarget(taskContext,
-							    getClassName(),
-							    getQueryTerm());
-		if((entry != null) && (entry.id > 0))
+		Long entry = this.getDataForTarget(taskContext,
+						   getClassName(),
+						   getQueryTerm());
+		if((entry != null) && (entry > 0))
 		    {
- 			this.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.id));
+ 			this.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry));
 			this.checkConnectivity();
 		    }
 		if(this.vertex == null)

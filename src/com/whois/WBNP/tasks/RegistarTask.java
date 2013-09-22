@@ -23,7 +23,7 @@ public class RegistarTask extends ConnectTask
 	this.setDataForTarget(taskContext,
 			      com.whois.WBNP.model.vertex.Registrar.class.getName(),
 			      this.getQueryTerm(),
-			      new VertexIDEntry(object.getId()));
+			      new Long(object.getId()));
 	object.updateIndexes();
 	return object;
     }
