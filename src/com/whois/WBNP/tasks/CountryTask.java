@@ -61,5 +61,19 @@ public class CountryTask extends ConnectTask
 	return 0;
     }
     
+    protected int performQueryUsingResultHandler(com.infinitegraph.pipelining.TaskContext taskContext,
+						 com.infinitegraph.GraphDatabase database)
+    {
+	this.initializeQuery();
+	this.vertex = this.query(taskContext,database,
+				 com.whois.WBNP.model.vertex.Country.class.getName(),
+				 this.getQueryTerm(),
+				 CountryQuery
+				 );
+	if(this.vertex != null)
+	    return 1;
+	return 0;
+    }
+    
 
 }   
