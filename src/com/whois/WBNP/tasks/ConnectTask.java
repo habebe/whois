@@ -164,15 +164,15 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
     static public com.objy.db.internal.Query RegistrarQuery = null;
     static public com.objy.db.internal.Query NameServerQuery = null;
     static public com.objy.db.internal.Query IpQuery = null;
-    static public void initializeQualifiers()
+    static public void initializeQquery()
     {
-        if(CountryObjectQualifier == null)
+        if(CountryQuery == null)
             {
-                CountryObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Country.class.getName(),"(name == $A:string)");
-                EmailObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Email.class.getName(),"(name == $A:string)");
-		RegistrarObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Registrar.class.getName(),"(name == $A:string)");
-                NameServerObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.NameServer.class.getName(),"(name == $A:string)");
-                IpObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Ip.class.getName(),"(ip == $A:string)");
+                CountryQuery = new com.objy.db.internal.Query(com.whois.WBNP.model.vertex.Country.class.getName(),"(name == $A:string)");
+                EmailQuery = new com.objy.db.internal.Query(com.whois.WBNP.model.vertex.Email.class.getName(),"(name == $A:string)");
+		RegistrarQuery = new com.objy.db.internal.Query(com.whois.WBNP.model.vertex.Registrar.class.getName(),"(name == $A:string)");
+                NameServerQuery = new com.objy.db.internal.Query(com.whois.WBNP.model.vertex.NameServer.class.getName(),"(name == $A:string)");
+                IpQuery = new com.objy.db.internal.Query(com.whois.WBNP.model.vertex.Ip.class.getName(),"(ip == $A:string)");
             }
     }
 
@@ -185,7 +185,8 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 					 com.infinitegraph.GraphDatabase database);
     protected abstract int  performQueryUsingQualifier(com.infinitegraph.pipelining.TaskContext taskContext,
 						       com.infinitegraph.GraphDatabase database);
-    
+    protected abstract int  performQueryUsingResultHandler(com.infinitegraph.pipelining.TaskContext taskContext,
+							   com.infinitegraph.GraphDatabase database);
     protected abstract String getClassName();
     
     protected void checkConnectivity()
