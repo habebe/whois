@@ -237,12 +237,17 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
 		if(ipDomainEdge == null)
 		    {
 			ipDomainEdge = new com.whois.WBNP.model.edge.IpDomain();
-			database.addEdge(ipDomainEdge,
-					 this.domainVertex,
-					 this.ipVertex,
-					 com.infinitegraph.EdgeKind.OUTGOING,
-					 (short)0);
+			long ipId = this.ipVertex.getId();
+			long domainId = this.domainVertex.getId();
 			ipDomainEdge.set_volume(this.getVolume());
+			if(domainId < ipId)
+			    database.addEdge(ipDomainEdge,domainId,ipId,
+					     com.infinitegraph.EdgeKind.OUTGOING,
+					     (short)0);
+			else
+			    database.addEdge(ipDomainEdge,ipId,domainId,
+					     com.infinitegraph.EdgeKind.INCOMING,
+					     (short)0);
 		    }
 		else
 		    ipDomainEdge.set_volume(ipDomainEdge.get_volume() + this.getVolume());

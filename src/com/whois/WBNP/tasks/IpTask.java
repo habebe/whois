@@ -46,10 +46,15 @@ public class IpTask extends ConnectTask
     {
 	com.whois.WBNP.model.edge.IpDomain ipDomainEdge = new com.whois.WBNP.model.edge.IpDomain();
 	ipDomainEdge.set_volume(this.getVolume());
-	database.addEdge(ipDomainEdge,domainId,
-			 this.vertex.getId(),
-			 com.infinitegraph.EdgeKind.OUTGOING,
-			 (short)0);	
+	long ipId = this.vertex.getId();
+	if(domainId < ipId)
+	    database.addEdge(ipDomainEdge,domainId,ipId,
+			     com.infinitegraph.EdgeKind.OUTGOING,
+			     (short)0);
+	else
+	    database.addEdge(ipDomainEdge,ipId,domainId,
+			     com.infinitegraph.EdgeKind.INCOMING,
+			     (short)0);
     }
 
     protected int performQuery(com.infinitegraph.pipelining.TaskContext taskContext,com.infinitegraph.GraphDatabase database)
