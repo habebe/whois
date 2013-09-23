@@ -164,7 +164,7 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
     static public com.objy.db.internal.Query RegistrarQuery = null;
     static public com.objy.db.internal.Query NameServerQuery = null;
     static public com.objy.db.internal.Query IpQuery = null;
-    static public void initializeQquery()
+    static public void initializeQuery()
     {
         if(CountryQuery == null)
             {
