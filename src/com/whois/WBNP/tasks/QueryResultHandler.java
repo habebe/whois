@@ -2,7 +2,7 @@ package com.objectivity.ig.utility;
 
 public class QueryResultHandler extends com.objy.db.internal.QueryResultHandler
 {
-    private com.objy.pm.ooId found;
+    private com.objy.pm.ooId found = null;
     public Object found(com.objy.db.app.ooFDObj fd)
     {
 	if (found != null)

@@ -86,8 +86,15 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 	    }
 	return vertex;
     }
-
-    private static QueryResultHandler RESULT_QUALIFIER = new QueryResultHandler();
+    
+    private static QueryResultHandler ResultHandler = null;
+    private QueryResultHandler getResultHandler()
+    {
+	if(ResultHandler == null)
+            ResultHandler = new QueryResultHandler();
+        return ResultHandler;
+    }
+    
     protected com.infinitegraph.BaseVertex query(com.infinitegraph.pipelining.TaskContext taskContext,
 						 com.infinitegraph.GraphDatabase database,
 						 String className,String queryTerm,
@@ -105,9 +112,10 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 		    }
 		else
 		    {
-			RESULT_QUALIFIER.reset();
-			qualifier.execute(RESULT_QUALIFIER);
-			Object found = RESULT_QUALIFIER.found(taskContext.getSession().getFD());
+			qualifier.setStringVarValue("A", queryTerm);
+			getResultHandler().reset();
+			qualifier.execute(ResultHandler);
+			Object found = ResultHandler.found(taskContext.getSession().getFD());
 			if(found != null)
 			    {
 				vertex = (com.infinitegraph.BaseVertex)found;
@@ -173,7 +181,8 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 	ConnectTask.PreProcessCounter += 1;
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 	long time = System.nanoTime();
-	if(this.performQueryUsingQualifier(taskContext,database) > 0)
+	if(this.performQueryUsingResultHandler(taskContext,database) > 0)
+	//if(this.performQueryUsingQualifier(taskContext,database) > 0)
 	    //if(this.performQuery(taskContext,database) > 0)
 	    this.checkConnectivity();
 	time = (System.nanoTime() - time);
