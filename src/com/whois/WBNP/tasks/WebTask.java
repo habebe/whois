@@ -11,30 +11,7 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
     private transient com.whois.WBNP.model.vertex.Ip     ipVertex     = null;
     private transient com.whois.WBNP.model.edge.IpDomain ipDomainEdge = null;
 
-    static class QueryResultHandler extends com.objy.db.internal.QueryResultHandler
-    {
-	private com.objy.db.app.ooId found;
-	public Object found(com.objy.db.app.ooFDObj fd)
-	{
-	    if (found != null)
-		{
-		    return fd.objectFrom(this.found);
-		}
-	    return null;
-	}
-	
-	void reset()
-	{
-	    found = null;
-	}
-	
-	//	@Override
-	    public boolean onQueryResult(long queryNumber, String QueryName, com.objy.db.app.ooId obj)
-	{
-	    found = obj;
-	    return false;
-	}
-    }
+   
     private static QueryResultHandler RESULT_QUALIFIER = new QueryResultHandler();
     @SuppressWarnings("unchecked")
     private java.util.HashMap<String,Long> getTargetEntryMap(com.infinitegraph.pipelining.TaskContext taskContext,String className) 

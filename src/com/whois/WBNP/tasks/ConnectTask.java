@@ -86,6 +86,44 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 	    }
 	return vertex;
     }
+
+    private static QueryResultHandler RESULT_QUALIFIER = new QueryResultHandler();
+    protected com.infinitegraph.BaseVertex query(com.infinitegraph.pipelining.TaskContext taskContext,
+						 com.infinitegraph.GraphDatabase database,
+						 String className,String queryTerm,
+						 com.objy.db.internal.Query qualifier
+						 )
+    {
+	com.infinitegraph.BaseVertex vertex = null;
+	if(queryTerm != null)
+	    {
+		Long entry = this.getDataForTarget(taskContext,className,queryTerm);
+		if(entry != null)
+		    {
+			if(entry > 0)
+			    vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry));
+		    }
+		else
+		    {
+			RESULT_QUALIFIER.reset();
+			qualifier.execute(RESULT_QUALIFIER);
+			Object found = RESULT_QUALIFIER.found(taskContext.getSession().getFD());
+			if(found != null)
+			    {
+				vertex = (com.infinitegraph.BaseVertex)found;
+			    }
+			if(vertex != null)
+			    this.setDataForTarget(taskContext,className,
+						  queryTerm,
+						  new Long(vertex.getId()));
+			else
+			    this.setDataForTarget(taskContext,className,
+						  queryTerm,
+						  new Long(-1));
+		    }
+	    }
+	return vertex;
+    }
     
     
     protected com.infinitegraph.BaseVertex query(com.infinitegraph.pipelining.TaskContext taskContext,
