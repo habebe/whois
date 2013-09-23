@@ -81,7 +81,20 @@ public class IpTask extends ConnectTask
 	return 0;
     }
 
-    
+    protected int performQueryUsingResultHandler(com.infinitegraph.pipelining.TaskContext taskContext,
+						 com.infinitegraph.GraphDatabase database)
+    {
+        this.initializeQuery();
+        this.vertex = this.query(taskContext,database,
+                                 com.whois.WBNP.model.vertex.Ip.class.getName(),
+                                 this.getQueryTerm(),
+                                 IpQuery
+                                 );
+        if(this.vertex != null)
+            return 1;
+        return 0;
+    }
+
     protected void checkConnectivity()
     {
 	if(this.vertex != null)

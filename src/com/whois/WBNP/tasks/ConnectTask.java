@@ -158,6 +158,26 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 		IpObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Ip.class.getName(),"(ip == $A:string)");
 	    }
     }
+
+    static public com.objy.db.internal.Query CountryQuery = null;
+    static public com.objy.db.internal.Query EmailQuery = null;
+    static public com.objy.db.internal.Query RegistrarQuery = null;
+    static public com.objy.db.internal.Query NameServerQuery = null;
+    static public com.objy.db.internal.Query IpQuery = null;
+    static public void initializeQualifiers()
+    {
+        if(CountryObjectQualifier == null)
+            {
+                CountryObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Country.class.getName(),"(name == $A:string)");
+                EmailObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Email.class.getName(),"(name == $A:string)");
+		RegistrarObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Registrar.class.getName(),"(name == $A:string)");
+                NameServerObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.NameServer.class.getName(),"(name == $A:string)");
+                IpObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Ip.class.getName(),"(ip == $A:string)");
+            }
+    }
+
+
+
     protected abstract com.infinitegraph.BaseVertex addVertex(com.infinitegraph.pipelining.TaskContext taskContext,
 							      com.infinitegraph.GraphDatabase database);
     protected abstract void createConnection(com.infinitegraph.GraphDatabase database);
