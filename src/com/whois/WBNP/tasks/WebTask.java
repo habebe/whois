@@ -12,7 +12,14 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
     private transient com.whois.WBNP.model.edge.IpDomain ipDomainEdge = null;
 
    
-    private static QueryResultHandler RESULT_QUALIFIER = new QueryResultHandler();
+    private static QueryResultHandler ResultHandler = null;
+    private QueryResultHandler getResultHandler()
+    {
+	if(ResultHandler == null)
+	    ResultHandler = new QueryResultHandler();
+	return ResultHandler;
+    }
+
     @SuppressWarnings("unchecked")
     private java.util.HashMap<String,Long> getTargetEntryMap(com.infinitegraph.pipelining.TaskContext taskContext,String className) 
     {
@@ -143,9 +150,9 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
 		else
 		    {
 			qualifier.setStringVarValue("A", queryTerm);
-			RESULT_QUALIFIER.reset();
-			qualifier.execute(RESULT_QUALIFIER);
-			Object found = RESULT_QUALIFIER.found(taskContext.getSession().getFD());
+			getResultHandler().reset();
+			qualifier.execute(ResultHandler);
+			Object found = ResultHandler.found(taskContext.getSession().getFD());
 			if (found != null)
 			    {
 				vertex = (com.infinitegraph.BaseVertex) found;
