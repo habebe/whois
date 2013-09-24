@@ -181,10 +181,10 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 	ConnectTask.PreProcessCounter += 1;
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 	long time = System.nanoTime();
-	if(this.performQueryUsingResultHandler(taskContext,database) > 0)
+	this.performQueryUsingResultHandler(taskContext,database);
 	//if(this.performQueryUsingQualifier(taskContext,database) > 0)
 	    //if(this.performQuery(taskContext,database) > 0)
-	    this.checkConnectivity();
+	    //this.checkConnectivity();
 	time = (System.nanoTime() - time);
 	logger.info(String.format("D,%d,%d",time,ConnectTask.PreProcessCounter));
     }
@@ -257,7 +257,6 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
     public void process(com.infinitegraph.pipelining.TaskContext taskContext)
     {
 	ConnectTask.ProcessCounter += 1;
-	logger.info(String.format("C,2,%d,%d",System.currentTimeMillis(),ConnectTask.ProcessCounter));
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 	com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph.getSessionData(taskContext.getSession());
 	gsd.getPlacementWorker().setPolicies(null);
@@ -269,11 +268,11 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 		if((entry != null) && (entry > 0))
 		    {
 			this.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry));
-			this.checkConnectivity();
 		    }
 		if(this.vertex == null)
 		    this.vertex = this.addVertex(taskContext,database);
 	    }
+	this.checkConnectivity();
 	if(this.connected == false)
 	    {
 		this.createConnection(database);

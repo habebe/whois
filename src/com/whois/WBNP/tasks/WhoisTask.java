@@ -18,10 +18,10 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
     private transient Node registrarNode = null;
     private transient Node[] nameServerNodes = null;
 
-    private String Country;
-    private String Registrar;
-    private String Email;
-    private String NameServerStatement;
+    private String country;
+    private String registrar;
+    private String email;
+    private String nameServerStatement;
 
     @SuppressWarnings("unchecked")
     private java.util.HashMap<String,Long> getTargetEntryMap(com.infinitegraph.pipelining.TaskContext taskContext,
@@ -53,46 +53,46 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
         return map.put(targetKey, entry);
     }
 	
-    public WhoisTask(String Domain,String Country,String Registrar,String Email,String NameServerStatement)
+    public WhoisTask(String domain,String country,String registrar,String email,String nameServerStatement)
     {
-	super(Domain);
-	this.set(Country,Registrar,Email,NameServerStatement);
+	super(domain);
+	this.set(country,registrar,email,nameServerStatement);
     }
     
-    private void set(String Country,String Registrar,String Email,String NameServerStatement)
+    private void set(String country,String registrar,String email,String nameServerStatement)
     {
-	this.Country  = Country;
-	this.Registrar = Registrar;
-	this.Email    = Email;
-	this.NameServerStatement = NameServerStatement;
+	this.country  = country;
+	this.registrar = registrar;
+	this.email    = email;
+	this.nameServerStatement = nameServerStatement;
 	this.markModified();
     }
 
     private String getCountry()
     {
 	fetch();
-	return this.Country;
+	return this.country;
     }
 
     private String getRegistrar()
     {
 	fetch();
-	return this.Registrar;
+	return this.registrar;
     }
  
     private String getEmail()
     {
 	fetch();
-	return this.Email;
+	return this.email;
     }
 
     private String[] getNameServers()
     {
 	fetch();
 	String[] nameServers = null;
-	if(this.NameServerStatement != null)
+	if(this.nameServerStatement != null)
 	    {
-		nameServers = this.NameServerStatement.split("\\|");
+		nameServers = this.nameServerStatement.split("\\|");
 	    }
 	return nameServers;
     }
@@ -141,7 +141,6 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	    }
     }
 
-
     private static QueryResultHandler ResultHandler = null;
     private QueryResultHandler getResultHandler()
     {
@@ -151,6 +150,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	    }
 	return ResultHandler;
     }
+
     private Node query(com.infinitegraph.pipelining.TaskContext taskContext,
 		       com.infinitegraph.GraphDatabase database,
 		       String className,String queryTerm,
@@ -414,6 +414,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	if(this.domainNode.vertex != null)
 	    {
 		long time = System.nanoTime();
+		
 		for(com.infinitegraph.EdgeHandle edgeHandle : this.domainNode.vertex.getEdges())
 		    {
 			long edgeType = edgeHandle.getTypeId();
@@ -478,8 +479,8 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			    }
 		    }
 		time = (System.nanoTime()-time);
-		int size = this.domainVertex.getHandle().getEdgeCount();
-                logger.info(String.format("C,%d,%d,%d",time,WhoisTask.ProcessCounter,size));
+		int size = this.domainNode.vertex.getHandle().getEdgeCount();
+                logger.info(String.format("C,%d,%d,%d,Domain=%s",time,WhoisTask.ProcessCounter,size,this.getQueryTerm()));
 	    }
     }
 
@@ -493,13 +494,15 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	long time = System.nanoTime();
 	//	this.performQueryUsingQualifier(taskContext,database);
 	this.performQueryUsingResultHandler(taskContext,database);
+	/*
 	if(this.numberOfNodesFound > 0)
 	    {
-		this.initializeEdgeTypes(database);
+		
 		this.checkConnectivity();
 	    }
+	*/
 	time = (System.nanoTime() - time);
-	logger.info(String.format("A,%d,%d",time,Whois.PreProcessCounter));
+	logger.info(String.format("A,%d,%d",time,WhoisTask.PreProcessCounter));
     }
     
     @Override
@@ -521,7 +524,6 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			if((entry != null) && (entry.longValue() > 0))
 			    {
 				this.domainNode.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.longValue()));
-				this.checkConnectivity();
 			    }
 		    }
 		if(this.domainNode.vertex == null)
@@ -536,6 +538,8 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 					      new Long(domain.getId()));
 			domain.updateIndexes();
 		    }
+		initializeEdgeTypes(database);
+		this.checkConnectivity();
 		if(this.countryNode != null)
 		    {
 			if(this.countryNode.vertex == null)
