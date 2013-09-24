@@ -407,6 +407,41 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	    WhoisTask.NameServerTypeId = database.getTypeId(com.whois.WBNP.model.edge.NameServerEdge.class.getName());
     }
 
+    private transient java.util.HashMap<Long,com.infinitegraph.EdgeHandle> connectivityMap = null;
+    private void checkConnectivityMapped()
+    {
+	
+	if(this.domainNode.vertex != null)
+	    {
+		connectivityMap = new java.util.HashMap<Long,com.infinitegraph.EdgeHandle>();
+		if((countryNode != null) && (countryNode.vertex != null))
+		    connectivityMap.put(countryNode.vertex.getId(),null);
+		if((emailNode != null) && (emailNode.vertex != null))
+		    connectivityMap.put(emailNode.vertex.getId(),null);
+		if((this.registrarNode != null) && (this.registrarNode.vertex != null))
+		    connectivityMap.put(this.registrarNode.vertex.getId(),null);
+		for(Node node:this.nameServerNodes)
+		    {
+			if(node.vertex != null)
+			    connectivityMap.put(node.vertex.getId(),null);
+		    }
+		if(connectivityMap.size() > 0)
+		    {
+			//this.domainNode.vertex.getEdgeToNeighbors(connectivityMap);
+		    }
+	    }
+    }
+
+    private boolean isConnected(Node node)
+    {
+	boolean status = node.connected;
+	/*
+	if(connectivityMap != null)
+	    status = (connectivityMap.get(node.vertex.getId()) != null); 
+	*/
+	return status;
+    }
+
     private void checkConnectivity()
     {
 	boolean status = false;
@@ -548,6 +583,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		if(vertexCreated == false)
 		    {
 			initializeEdgeTypes(database);
+			//this.checkConnectivityMapped();
 			this.checkConnectivity();
 		    }
 		if(this.countryNode != null)
@@ -558,7 +594,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 				database.submitPipelineTask(subTask);
 
 			    }
-			else if(this.countryNode.connected == false)
+			else if(isConnected(this.countryNode) == false)
 			    {
 				this.addEdge(database,
 					     new com.whois.WBNP.model.edge.OwnerCountry(),
@@ -573,7 +609,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 				EmailTask subTask = new EmailTask(this.getEmail(),this.domainNode.vertex.getId());
 				database.submitPipelineTask(subTask);
 			    }
-			else if(this.emailNode.connected == false)
+			else if(isConnected(this.emailNode) == false)
 			    {
 				this.addEdge(database,
 					     new com.whois.WBNP.model.edge.OwnerEmail(),
@@ -589,7 +625,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 				RegistarTask subTask = new RegistarTask(this.getRegistrar(),this.domainNode.vertex.getId());
 				database.submitPipelineTask(subTask);
 			    }
-			else if(this.registrarNode.connected == false)
+			else if(isConnected(registrarNode) == false)
 			    {
 				this.addEdge(database,
 					     new com.whois.WBNP.model.edge.OwnerRegistrar(),
@@ -613,12 +649,12 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 						    }
 					    }
 				    }
-				else if(nameServer.connected == false)
+				else if(isConnected(nameServer) == false)
 				    {
 					this.addEdge(database,
 						     new com.whois.WBNP.model.edge.NameServerEdge(),
 						     this.domainNode.vertex.getId(),
-						     this.nameServer.vertex.getId());
+						     nameServer.vertex.getId());
 				    }
 			    }
 		    }

@@ -244,8 +244,8 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 		com.infinitegraph.EdgeHandle handle = this.vertex.getEdgeToNeighbor(this.domainId);
 		this.connected = (handle != null);
 		time = (System.nanoTime() - time);
-		 int size = this.domainVertex.getHandle().getEdgeCount();
-		 logger.info(String.format("C,%d,%d,%d,%s",time,ConnectTask.ProcessCounter,size,this.getQueryTerm()));
+		int size = this.vertex.getHandle().getEdgeCount();
+		logger.info(String.format("C,%d,%d,%d,%s,%b",time,ConnectTask.ProcessCounter,size,this.getQueryTerm(),this.connected));
 	    }
     }
 
@@ -275,13 +275,13 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 	    }
 	if(createdVertex == false)
 	    {
-		this.checkConnectivity();
+		//this.checkConnectivity();
 	    }
 	if(this.connected == false)
 	    {
 		this.createConnection(database);
 	    }
-	time = System.nanoTime();
+	time = (System.nanoTime()-time);
 	logger.info(String.format("F,%d,%d",time,ConnectTask.ProcessCounter));
     }
     
