@@ -413,7 +413,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	boolean status = false;
 	if(this.domainNode.vertex != null)
 	    {
-		
+		long time = System.nanoTime();
 		for(com.infinitegraph.EdgeHandle edgeHandle : this.domainNode.vertex.getEdges())
 		    {
 			long edgeType = edgeHandle.getTypeId();
@@ -477,7 +477,9 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 				    }
 			    }
 		    }
-		
+		time = (System.nanoTime()-time);
+		int size = this.domainVertex.getHandle().getEdgeCount();
+                logger.info(String.format("C,%d,%d,%d",time,WhoisTask.ProcessCounter,size));
 	    }
     }
 
@@ -488,7 +490,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
     {
 	WhoisTask.PreProcessCounter += 1;
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
-	logger.info(String.format("D,0,%d,%d",System.currentTimeMillis(),WhoisTask.PreProcessCounter));
+	long time = System.nanoTime();
 	//	this.performQueryUsingQualifier(taskContext,database);
 	this.performQueryUsingResultHandler(taskContext,database);
 	if(this.numberOfNodesFound > 0)
@@ -496,14 +498,15 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		this.initializeEdgeTypes(database);
 		this.checkConnectivity();
 	    }
-	logger.info(String.format("D,1,%d,%d",System.currentTimeMillis(),WhoisTask.PreProcessCounter));
+	time = (System.nanoTime() - time);
+	logger.info(String.format("A,%d,%d",time,Whois.PreProcessCounter));
     }
     
     @Override
     public void process(com.infinitegraph.pipelining.TaskContext taskContext)
     {
 	WhoisTask.ProcessCounter += 1;
-	logger.info(String.format("D,2,%d,%d",System.currentTimeMillis(),WhoisTask.ProcessCounter));
+	long time = System.nanoTime();
 	if(this.domainNode != null)
 	    {
 		com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph.getSessionData(taskContext.getSession());
@@ -614,7 +617,8 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		    }
 		
 	    }
-	logger.info(String.format("D,3,%d,%d",System.currentTimeMillis(),WhoisTask.ProcessCounter));
+	time  = (System.nanoTime() - time);
+	logger.info(String.format("B,%d,%d",time,WhoisTask.ProcessCounter));
     }
 	
 
