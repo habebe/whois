@@ -407,7 +407,6 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	    WhoisTask.NameServerTypeId = database.getTypeId(com.whois.WBNP.model.edge.NameServerEdge.class.getName());
     }
 
-    
     private void checkConnectivity()
     {
 	boolean status = false;
@@ -494,17 +493,24 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	long time = System.nanoTime();
 	//	this.performQueryUsingQualifier(taskContext,database);
 	this.performQueryUsingResultHandler(taskContext,database);
-	/*
-	if(this.numberOfNodesFound > 0)
-	    {
-		
-		this.checkConnectivity();
-	    }
-	*/
 	time = (System.nanoTime() - time);
 	logger.info(String.format("A,%d,%d",time,WhoisTask.PreProcessCounter));
     }
     
+    private void addEdge(com.infinitegraph.GraphDatabase database,
+			 com.infinitegraph.BaseEdge baseEdge,
+			 long source,long target)
+    {
+	if(source < target)
+	    database.addEdge(baseEdge,source,target,
+			     com.infinitegraph.EdgeKind.OUTGOING,
+			     (short)0);
+	else
+	    database.addEdge(baseEdge,target,source,
+			     com.infinitegraph.EdgeKind.INCOMING,
+			     (short)0);
+    }
+
     @Override
     public void process(com.infinitegraph.pipelining.TaskContext taskContext)
     {
@@ -514,7 +520,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 	    {
 		com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph.getSessionData(taskContext.getSession());
 		gsd.getPlacementWorker().setPolicies(null);
-		
+		boolean vertexCreated = false;
 		com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 		if(this.domainNode.vertex == null)
 		    {
@@ -528,6 +534,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		    }
 		if(this.domainNode.vertex == null)
 		    {
+			vertexCreated = true;
 			com.whois.WBNP.model.vertex.Domain domain = new com.whois.WBNP.model.vertex.Domain();
 			domain.set_name(this.getQueryTerm());
 			this.domainNode.vertex = domain;
@@ -538,8 +545,11 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 					      new Long(domain.getId()));
 			domain.updateIndexes();
 		    }
-		initializeEdgeTypes(database);
-		this.checkConnectivity();
+		if(vertexCreated == false)
+		    {
+			initializeEdgeTypes(database);
+			this.checkConnectivity();
+		    }
 		if(this.countryNode != null)
 		    {
 			if(this.countryNode.vertex == null)
@@ -550,12 +560,10 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			    }
 			else if(this.countryNode.connected == false)
 			    {
-				com.infinitegraph.BaseEdge baseEdge = new com.whois.WBNP.model.edge.OwnerCountry();
-				database.addEdge(baseEdge,this.domainNode.vertex,
-						 this.countryNode.vertex,
-						 com.infinitegraph.EdgeKind.OUTGOING,
-						 (short)0);
-				
+				this.addEdge(database,
+					     new com.whois.WBNP.model.edge.OwnerCountry(),
+					     this.domainNode.vertex.getId(),
+					     this.countryNode.vertex.getId());
 			    }
 		    }
 		if(this.emailNode != null)
@@ -567,12 +575,11 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			    }
 			else if(this.emailNode.connected == false)
 			    {
-				com.infinitegraph.BaseEdge baseEdge = new com.whois.WBNP.model.edge.OwnerEmail();
-				database.addEdge(baseEdge,this.domainNode.vertex,
-						 this.emailNode.vertex,
-						 com.infinitegraph.EdgeKind.OUTGOING,
-						 (short)0);
-				
+				this.addEdge(database,
+					     new com.whois.WBNP.model.edge.OwnerEmail(),
+					     this.domainNode.vertex.getId(),
+					     this.emailNode.vertex.getId()
+					     );
 			    }
 		    }
 		if(this.registrarNode != null)
@@ -584,12 +591,10 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			    }
 			else if(this.registrarNode.connected == false)
 			    {
-				com.infinitegraph.BaseEdge baseEdge = new com.whois.WBNP.model.edge.OwnerRegistrar();
-				database.addEdge(baseEdge,this.domainNode.vertex,
-						 this.registrarNode.vertex,
-						 com.infinitegraph.EdgeKind.OUTGOING,
-						 (short)0);
-				
+				this.addEdge(database,
+					     new com.whois.WBNP.model.edge.OwnerRegistrar(),
+					     this.domainNode.vertex.getId(),
+					     this.registrarNode.vertex.getId());
 			    }
 		    }
 		if(this.nameServerNodes != null)
@@ -610,12 +615,10 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 				    }
 				else if(nameServer.connected == false)
 				    {
-					com.infinitegraph.BaseEdge baseEdge = new com.whois.WBNP.model.edge.NameServerEdge();
-					database.addEdge(baseEdge,this.domainNode.vertex,
-							 nameServer.vertex,
-							 com.infinitegraph.EdgeKind.OUTGOING,
-							 (short)0);
-					
+					this.addEdge(database,
+						     new com.whois.WBNP.model.edge.NameServerEdge(),
+						     this.domainNode.vertex.getId(),
+						     this.nameServer.vertex.getId());
 				    }
 			    }
 		    }

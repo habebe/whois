@@ -240,16 +240,12 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
     {
 	if(this.vertex != null)
 	    {
-		
-		for(com.infinitegraph.EdgeHandle edgeHandle : this.vertex.getEdges())
-		    {
-			com.infinitegraph.VertexHandle vertexHandle = edgeHandle.getPeer();
-			if(domainId == vertexHandle.getId())
-			    {
-				this.connected = true;
-				return;
-			    }
-		    }
+		long time = System.nanoTime();
+		com.infinitegraph.EdgeHandle handle = this.vertex.getEdgeToNeighbor(this.domainId);
+		this.connected = (handle != null);
+		time = (System.nanoTime() - time);
+		 int size = this.domainVertex.getHandle().getEdgeCount();
+		 logger.info(String.format("C,%d,%d,%d,%s",time,ConnectTask.ProcessCounter,size,this.getQueryTerm()));
 	    }
     }
 
@@ -257,9 +253,11 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
     public void process(com.infinitegraph.pipelining.TaskContext taskContext)
     {
 	ConnectTask.ProcessCounter += 1;
+	long time = System.nanoTime();
 	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 	com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph.getSessionData(taskContext.getSession());
 	gsd.getPlacementWorker().setPolicies(null);
+	boolean createdVertex = false;
 	if(this.vertex == null)
 	    {
 		Long entry = this.getDataForTarget(taskContext,
@@ -270,14 +268,21 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 			this.vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry));
 		    }
 		if(this.vertex == null)
-		    this.vertex = this.addVertex(taskContext,database);
+		    {
+			createdVertex = true;
+			this.vertex = this.addVertex(taskContext,database);
+		    }
 	    }
-	this.checkConnectivity();
+	if(createdVertex == false)
+	    {
+		this.checkConnectivity();
+	    }
 	if(this.connected == false)
 	    {
 		this.createConnection(database);
 	    }
-	logger.info(String.format("C,3,%d,%d",System.currentTimeMillis(),ConnectTask.ProcessCounter));
+	time = System.nanoTime();
+	logger.info(String.format("F,%d,%d",time,ConnectTask.ProcessCounter));
     }
     
     @Override

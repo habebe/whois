@@ -100,13 +100,6 @@ public class IpTask extends ConnectTask
 	if(this.vertex != null)
 	    {
 		long time = System.nanoTime();
-		/*
-		  if(this.vertex.isNeighbor(domainId))
-		    {
-			java.util.List<com.infinitegraph.EdgeHandle> edges = this.vertex.findEdgesToNeighbor(domainId);
-			ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain)edges.get(0).getEdge();
-		    }
-		*/
 		com.infinitegraph.EdgeHandle handle = this.vertex.getEdgeToNeighbor(domainId);
 		if(handle != null)
 		    ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain)handle.getEdge();
@@ -114,22 +107,6 @@ public class IpTask extends ConnectTask
 		int size = this.vertex.getHandle().getEdgeCount();
 		logger.info(String.format("C,%d,%d,%d",time,ConnectTask.ProcessCounter,size));
 	    }
-	/*
-	  if(this.vertex != null)
-	    {
-		
-		for(com.infinitegraph.EdgeHandle edgeHandle : this.vertex.getEdges())
-		    {
-			com.infinitegraph.VertexHandle vertexHandle = edgeHandle.getPeer();
-			if(domainId == vertexHandle.getId())
-			    {
-				
-				ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain)edgeHandle.getEdge();
-				return;
-			    }
-		    }
-	    }
-	*/
     }
 
 
