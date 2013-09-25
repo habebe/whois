@@ -1,350 +1,143 @@
 package com.objectivity.ig.utility;
-import org.slf4j.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.infinitegraph.impl.ObjectivityUtilities;
 
 public class WebTask extends com.infinitegraph.pipelining.QueryTask
 {
-    private static final Logger logger = LoggerFactory.getLogger(WebTask.class);
-    private String Ip;
-    private double Volume;
 
-    private transient com.whois.WBNP.model.vertex.Domain domainVertex = null;
-    private transient com.whois.WBNP.model.vertex.Ip     ipVertex     = null;
-    private transient com.whois.WBNP.model.edge.IpDomain ipDomainEdge = null;
+  private static final Logger logger = LoggerFactory.getLogger(WebTask.class);
+  static long PreProcessCounter = 0;
+  static long ProcessCounter = 0;
 
-   
-    private static QueryResultHandler ResultHandler = null;
-    private QueryResultHandler getResultHandler()
-    {
-	if(ResultHandler == null)
-	    ResultHandler = new QueryResultHandler();
-	return ResultHandler;
-    }
+  private String Ip;
+  private double Volume;
 
-    @SuppressWarnings("unchecked")
-    private java.util.HashMap<String,Long> getTargetEntryMap(com.infinitegraph.pipelining.TaskContext taskContext,String className) 
-    {
-	java.util.HashMap<String,Long> map = (java.util.HashMap<String,Long>)taskContext.getTaskGroupData(className);
-	if(map == null) 
-	    {
-		map = new java.util.HashMap<String,Long>();
-		taskContext.setTaskGroupData(className,map);
-	    }
-	return map;
-    }	
+  private transient com.infinitegraph.pipelining.TargetVertex domainVertex = null;
+  private transient com.infinitegraph.pipelining.TargetVertex ipVertex = null;
 
-    private Long getDataForTarget(com.infinitegraph.pipelining.TaskContext taskContext,String className,String targetKey)
-    {
-    	java.util.HashMap<String,Long> map = this.getTargetEntryMap(taskContext,className);
-        return map.get(targetKey);
-    }
-        
-    private Long setDataForTarget(com.infinitegraph.pipelining.TaskContext taskContext, String className,String targetKey,Long entry)
-    {
-        java.util.HashMap<String,Long> map = this.getTargetEntryMap(taskContext,className);
-        return map.put(targetKey, entry);
-    }
-	
-    public WebTask(String Domain,String Ip,double Volume)
-    {
-	super(Domain);
-	this.set(Ip,Volume);
-    }
-    
-    private void set(String Ip,double Volume)
-    {
-	this.Ip     = Ip;
-	this.Volume = Volume;
-	this.markModified();
-    }
+  private transient long ipDomainEdge = 0;
 
-    private String getIp()
-    {
-	fetch();
-	return this.Ip;
-    }
+  public WebTask(String Domain, String Ip, double Volume)
+  {
+    super(Domain);
+    this.set(Ip, Volume);
+  }
 
-    private double getVolume()
+  private void set(String Ip, double Volume)
+  {
+    this.markModified();
+    this.Ip = Ip;
+    this.Volume = Volume;
+  }
+
+  private String getIp()
+  {
+    fetch();
+    return this.Ip;
+  }
+
+  private double getVolume()
+  {
+    fetch();
+    return this.Volume;
+  }
+
+  @Override
+  public void setPrimaryKeys(com.infinitegraph.pipelining.TargetManager targetManager)
+  {
+    targetManager.setPrimaryKey(com.whois.WBNP.model.vertex.Domain.class,
+        "name");
+    targetManager.setPrimaryKey(com.whois.WBNP.model.vertex.Ip.class, "ip");
+  }
+
+  @Override
+  public void obtainVertexTargets(
+      com.infinitegraph.pipelining.TaskContext taskContext)
+  {
+    com.infinitegraph.pipelining.TargetManager targetManager = 
+        taskContext.getTargetManager();
+    this.domainVertex = targetManager.getTargetVertex(
+        com.whois.WBNP.model.vertex.Domain.class, this.getQueryTerm());
+    this.ipVertex = targetManager.getTargetVertex(
+        com.whois.WBNP.model.vertex.Ip.class, this.getIp());
+  }
+
+  @Override
+  public void checkConnectivity(
+      com.infinitegraph.pipelining.TaskContext taskContext)
+  {
+    if (this.domainVertex.wasFound() && this.ipVertex.wasFound())
     {
-	fetch();
-	return this.Volume;
+      // there can only be an existing edge if both vertices were found
+      long time = System.nanoTime();
+      com.whois.WBNP.model.vertex.Domain asDomain = (com.whois.WBNP.model.vertex.Domain) ObjectivityUtilities
+          .getObjectFromLong(taskContext.getSession(),
+              this.domainVertex.getId());
+      com.infinitegraph.EdgeHandle handle = asDomain.getEdgeToNeighbor(ipVertex
+          .getId());
+      if (handle != null)
+        ipDomainEdge = handle.getEdge().getId();
+      time = (System.nanoTime() - time);
+      int size = asDomain.getHandle().getEdgeCount();
+      logger.info(String.format("C,%d,%d,%d", time, WebTask.ProcessCounter,
+          size));
     }
- 
-    private com.infinitegraph.BaseVertex query(com.infinitegraph.pipelining.TaskContext taskContext,
-					       com.infinitegraph.GraphDatabase database,
-					       String className,String queryTerm
-					       )
+  }
+
+  @Override
+  public void process(com.infinitegraph.pipelining.TaskContext taskContext)
+  {
+    WebTask.ProcessCounter += 1;
+    long time = System.nanoTime();
+    com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph
+        .getSessionData(taskContext.getSession());
+    gsd.getPlacementWorker().setPolicies(null);
+
+    com.infinitegraph.GraphDatabase database = taskContext.getGraph();
+    if (this.domainVertex.getId() == 0)
     {
-	com.infinitegraph.BaseVertex vertex = null;
-	if(queryTerm != null)
-	    {
-		Long entry = this.getDataForTarget(taskContext,className,queryTerm);
-		if(entry != null)
-		    {
-			if(entry.longValue() > 0)
-			    vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.longValue()));
-		    }
-		else
-		    {
-			try
-			    {
-				com.infinitegraph.Query<com.infinitegraph.BaseVertex> query = database.createQuery(className,queryTerm);
-				vertex = query.getSingleResult();
-				if(vertex != null)
-				    this.setDataForTarget(taskContext,className,
-							  queryTerm,
-							  new Long(vertex.getId()));
-				else
-				    this.setDataForTarget(taskContext,className,
-							  queryTerm,
-							  new Long(-1));
-			    }
-			catch(com.infinitegraph.GraphException e)
-			    {
-				logger.error("QUERY FAILED - " + queryTerm + " - " + e.toString());
-				e.printStackTrace();
-			    }
-		    }
-	    }
-	return vertex;
-    }
-    static com.objy.query.ObjectQualifier DomainObjectQualifier = null;
-    static com.objy.query.ObjectQualifier IpObjectQualifier = null;
-    static void initializeQualifiers()
-    {
-        if(DomainObjectQualifier == null)
-            {
-                DomainObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Domain.class.getName(),"(name == $A:string)");
-                IpObjectQualifier = new com.objy.query.ObjectQualifier(com.whois.WBNP.model.vertex.Ip.class.getName(),"(ip == $A:string)");
-	    }
+      com.whois.WBNP.model.vertex.Domain newDomainVertex = new com.whois.WBNP.model.vertex.Domain();
+      newDomainVertex.set_name(this.getQueryTerm());
+      database.addVertex(newDomainVertex);
+      this.domainVertex.setId(newDomainVertex.getId());
+      newDomainVertex.updateIndexes();
     }
 
-    static com.objy.db.internal.Query DomainQuery = null;
-    static com.objy.db.internal.Query IpQuery = null; 
-    static void initializeQuery()
+    if (this.ipVertex.requiresCreation())
     {
-	if (DomainQuery == null)
-	    {
-		DomainQuery = new com.objy.db.internal.Query(
-							     com.whois.WBNP.model.vertex.Domain.class.getName(),
-							     "(name == $A:string)");
-		IpQuery = new com.objy.db.internal.Query(
-							 com.whois.WBNP.model.vertex.Ip.class.getName(), "(ip == $A:string)");
-	    }
+      // SUBMIT TASK
+      IpTask subTask = new IpTask(this.getIp(), this.domainVertex.getId(),
+          this.getVolume());
+      database.submitPipelineTask(subTask);
     }
-
-    private com.infinitegraph.BaseVertex query(
-					       com.infinitegraph.pipelining.TaskContext taskContext,
-					       com.infinitegraph.GraphDatabase database, String className,
-					       String queryTerm, com.objy.db.internal.Query qualifier)
+    else
     {
-	com.infinitegraph.BaseVertex vertex = null;
-	if (queryTerm != null)
-	    {
-		Long entry = this.getDataForTarget(taskContext, className,
-							    queryTerm);
-		if (entry != null)
-		    {
-			if (entry > 0)
-			    vertex = (com.infinitegraph.BaseVertex) (database.getVertex(entry));
-		    }
-		else
-		    {
-			qualifier.setStringVarValue("A", queryTerm);
-			getResultHandler().reset();
-			qualifier.execute(ResultHandler);
-			Object found = ResultHandler.found(taskContext.getSession().getFD());
-			if (found != null)
-			    {
-				vertex = (com.infinitegraph.BaseVertex) found;
-			    }
-			if (vertex != null)
-			    this.setDataForTarget(taskContext, className, queryTerm,
-						  new Long(vertex.getId()));
-			else
-			    this.setDataForTarget(taskContext, className, queryTerm,
-						  new Long(-1));
-		    }
-	    }
-	return vertex;
+      if (ipDomainEdge == 0)
+      {
+        com.whois.WBNP.model.edge.IpDomain newIpDomainEdge = new com.whois.WBNP.model.edge.IpDomain();
+        database.addEdge(newIpDomainEdge, this.domainVertex.getId(),
+            this.ipVertex.getId(), com.infinitegraph.EdgeKind.OUTGOING,
+            (short) 0);
+        newIpDomainEdge.set_volume(this.getVolume());
+      }
+      else
+      {
+        com.whois.WBNP.model.edge.IpDomain existingIpDomainEdge = (com.whois.WBNP.model.edge.IpDomain) ObjectivityUtilities
+            .getObjectFromLong(taskContext.getSession(), ipDomainEdge);
+        existingIpDomainEdge.set_volume(existingIpDomainEdge.get_volume()
+            + this.getVolume());
+      }
     }
- 
+    time = (System.nanoTime() - time);
+    logger.info(String.format("B,%d,%d", time, WebTask.ProcessCounter));
+  }
 
-    private com.infinitegraph.BaseVertex query(com.infinitegraph.pipelining.TaskContext taskContext,
-                       com.infinitegraph.GraphDatabase database,
-                       String className,String queryTerm,
-                       com.objy.query.ObjectQualifier qualifier
-                       )
-    {
-        com.infinitegraph.BaseVertex vertex = null;
-        if(queryTerm != null)
-            {
-                Long entry = this.getDataForTarget(taskContext,className,queryTerm);
-                if(entry != null)
-                    {
-                        if(entry.longValue() > 0)
-                            vertex = (com.infinitegraph.BaseVertex)(database.getVertex(entry.longValue()));
-                    }
-                else
-                    {
-                        qualifier.setStringVarValue("A",queryTerm);
-                        com.objy.db.app.Iterator iterator = taskContext.getSession().getFD().scan(className,qualifier);
-                        if(iterator.hasNext())
-                            {
-                                vertex = (com.infinitegraph.BaseVertex)iterator.next();
-                            }
-                        if(vertex != null)
-                            this.setDataForTarget(taskContext,className,
-                                                  queryTerm,
-                                                  new Long(vertex.getId()));
-                        else
-                            this.setDataForTarget(taskContext,className,
-                                                  queryTerm,
-                                                  new Long(-1));
-                    }
-            }
-        return vertex;
-    }
-
-
-    private void performQuery(com.infinitegraph.pipelining.TaskContext taskContext,
-			      com.infinitegraph.GraphDatabase database)
-    {
-	
-	this.domainVertex = (com.whois.WBNP.model.vertex.Domain)this.query(taskContext,database,
-									   com.whois.WBNP.model.vertex.Domain.class.getName(),
-									   String.format("(name == \"%s\")",this.getQueryTerm()));
-	this.ipVertex     = (com.whois.WBNP.model.vertex.Ip)this.query(taskContext,database,
-								       com.whois.WBNP.model.vertex.Ip.class.getName(),
-								       String.format("(ip == \"%s\")",this.getIp()));
-    }
-
-    private void performQueryUsingQualifier(com.infinitegraph.pipelining.TaskContext taskContext,
-					    com.infinitegraph.GraphDatabase database)
-    {
-        this.initializeQualifiers();
-        this.domainVertex    = (com.whois.WBNP.model.vertex.Domain)this.query(taskContext,database,
-									      com.whois.WBNP.model.vertex.Domain.class.getName(),
-									      this.getQueryTerm(),
-									      DomainObjectQualifier
-									      );
-        this.ipVertex   = (com.whois.WBNP.model.vertex.Ip)this.query(taskContext,database,
-								     com.whois.WBNP.model.vertex.Ip.class.getName(),
-								     this.getIp(),
-								     IpObjectQualifier
-								     );
-    }
-
-    private void performQueryUsingResultHandler(com.infinitegraph.pipelining.TaskContext taskContext,
-						com.infinitegraph.GraphDatabase database)
-    {
-        this.initializeQuery();
-	this.domainVertex    = (com.whois.WBNP.model.vertex.Domain)this.query(taskContext,database,
-                                                                              com.whois.WBNP.model.vertex.Domain.class.getName(),
-                                                                              this.getQueryTerm(),
-                                                                              DomainQuery
-                                                                              );
-        this.ipVertex   = (com.whois.WBNP.model.vertex.Ip)this.query(taskContext,database,
-                                                                     com.whois.WBNP.model.vertex.Ip.class.getName(),
-                                                                     this.getIp(),
-                                                                     IpQuery
-                                                                     );
-    }
-
-
-    static long IpDomainTypeId   = -1;
-    private static void initializeEdgeTypes(com.infinitegraph.GraphDatabase database)
-    {
-	if(WebTask.IpDomainTypeId == -1)
-	    WebTask.IpDomainTypeId = database.getTypeId(com.whois.WBNP.model.edge.IpDomain.class.getName());
-    }
-
-    
-    private void checkConnectivity(com.infinitegraph.GraphDatabase database)
-    {
-	if((domainVertex != null) && (ipVertex != null))
-	    {
-		long time = System.nanoTime();
-		long id = ipVertex.getId();
-		com.infinitegraph.EdgeHandle handle = this.domainVertex.getEdgeToNeighbor(id);
-                if(handle != null)
-                    ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain)handle.getEdge();
-		time = (System.nanoTime()-time);
-		int size = this.domainVertex.getHandle().getEdgeCount();
-                logger.info(String.format("C,%d,%d,%d",time,WebTask.ProcessCounter,size));
-	    }
-    }
-
-    static long PreProcessCounter = 0;
-    static long ProcessCounter = 0;		
-    @Override
-    public void preProcess(com.infinitegraph.pipelining.TaskContext taskContext) 
-    {
-	WebTask.PreProcessCounter += 1;
-	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
-	long time = System.nanoTime();
-	//this.performQuery(taskContext,database);
-	//this.performQueryUsingQualifier(taskContext,database);
-	this.performQueryUsingResultHandler(taskContext,database);
-	this.checkConnectivity(database);
-	time = (System.nanoTime() - time);
-	logger.info(String.format("A,%d,%d",time,WebTask.PreProcessCounter));
-    }
-    
-    @Override
-    public void process(com.infinitegraph.pipelining.TaskContext taskContext)
-    {
-	WebTask.ProcessCounter += 1;
-	long time = System.nanoTime();
-	com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph.getSessionData(taskContext.getSession());
-	gsd.getPlacementWorker().setPolicies(null);
-	
-	com.infinitegraph.GraphDatabase database = taskContext.getGraph();
-	if(this.domainVertex == null)
-	    {
-		domainVertex = new com.whois.WBNP.model.vertex.Domain();
-		domainVertex.set_name(this.getQueryTerm());
-		database.addVertex(domainVertex);
-		this.setDataForTarget(taskContext,
-				      com.whois.WBNP.model.vertex.Domain.class.getName(),
-				      this.getQueryTerm(),
-				      new Long(domainVertex.getId()));
-		domainVertex.updateIndexes();
-	    }
-	
-	if(this.ipVertex != null)
-	    {
-		if(ipDomainEdge == null)
-		    {
-			ipDomainEdge = new com.whois.WBNP.model.edge.IpDomain();
-			long ipId = this.ipVertex.getId();
-			long domainId = this.domainVertex.getId();
-			ipDomainEdge.set_volume(this.getVolume());
-			if(domainId < ipId)
-			    database.addEdge(ipDomainEdge,domainId,ipId,
-					     com.infinitegraph.EdgeKind.OUTGOING,
-					     (short)0);
-			else
-			    database.addEdge(ipDomainEdge,ipId,domainId,
-					     com.infinitegraph.EdgeKind.INCOMING,
-					     (short)0);
-		    }
-		else
-		    ipDomainEdge.set_volume(ipDomainEdge.get_volume() + this.getVolume());
-	    }
-	else
-	    {
-		//SUBMIT TASK
-		IpTask subTask = new IpTask(this.getIp(),this.domainVertex.getId(),this.getVolume());
-		database.submitPipelineTask(subTask);
-	    }
-	time  = (System.nanoTime() - time);
-	logger.info(String.format("B,%d,%d",time,WebTask.ProcessCounter));
-    }
-	
-
-    @Override
-    public String getAuditLogEntry() 
-    {      
-	return "WebTask";
-    }
-}   
+  @Override
+  public String getAuditLogEntry()
+  {
+    return "WebTask";
+  }
+}

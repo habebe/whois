@@ -1,5 +1,6 @@
 package com.objectivity.ig.utility;
 
+@Deprecated
 public class QueryResultHandler extends com.objy.db.internal.QueryResultHandler
 {
     private com.objy.pm.ooId found = null;
