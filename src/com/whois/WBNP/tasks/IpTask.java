@@ -9,7 +9,7 @@ public class IpTask extends com.infinitegraph.pipelining.QueryTask
     private double volume;
     private long domainId = 0;
     private transient com.whois.WBNP.model.edge.IpDomain ipDomainEdge = null;
-    private transient com.infinitegraph.pipelining.TargetVertex ipTargetVertex = null;
+    private transient com.infinitegraph.pipelining.TargetVertex ipTargetVertex;
     private static final Logger logger = LoggerFactory.getLogger(IpTask.class);
 
     public IpTask(String term,long domainId,double volume)
@@ -101,6 +101,7 @@ public class IpTask extends com.infinitegraph.pipelining.QueryTask
 		com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph
 				.getSessionData(taskContext.getSession());
 		gsd.getPlacementWorker().setPolicies(null);
+		
 		if (ipTargetVertex.requiresCreation()) {
 			// if we didn't create it within this batch, we probably need to query for it.
 			obtainVertexTargets(taskContext);

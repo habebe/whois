@@ -23,10 +23,12 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
     private transient com.infinitegraph.pipelining.TargetVertex	countryTargetVertex;
     private transient com.infinitegraph.pipelining.TargetVertex	emailTargetVertex;
     private transient com.infinitegraph.pipelining.TargetVertex registrarTargetVertex;
+    
     private transient HashMap<Long, EdgeHandle> neighborMap = new HashMap<Long, EdgeHandle>();
-    private transient com.infinitegraph.EdgeHandle countryEdgeHandle;
-    private transient com.infinitegraph.EdgeHandle emailEdgeHandle;
-    private transient com.infinitegraph.EdgeHandle registrarEdgeHandle;
+    
+    private transient com.infinitegraph.EdgeHandle countryEdgeHandle = null;
+    private transient com.infinitegraph.EdgeHandle emailEdgeHandle = null;
+    private transient com.infinitegraph.EdgeHandle registrarEdgeHandle = null;
     
     private String country;
     private String registrar;
@@ -103,13 +105,16 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		      com.whois.WBNP.model.vertex.Domain.class, this.getQueryTerm());
 		this.countryTargetVertex = targetManager.getTargetVertex(
 		      com.whois.WBNP.model.vertex.Country.class, this.getCountry());
-		neighborMap.put(countryTargetVertex.getId(), null);
+		if (countryTargetVertex.wasFound())
+			neighborMap.put(countryTargetVertex.getId(), null);
 		this.emailTargetVertex = targetManager.getTargetVertex(
 		          com.whois.WBNP.model.vertex.Email.class, this.getEmail());
-		neighborMap.put(emailTargetVertex.getId(), null);
+		if (emailTargetVertex.wasFound())
+			neighborMap.put(emailTargetVertex.getId(), null);
 		this.registrarTargetVertex = targetManager.getTargetVertex(
 		          com.whois.WBNP.model.vertex.Registrar.class, this.getRegistrar());
-		neighborMap.put(registrarTargetVertex.getId(), null);
+		if (registrarTargetVertex.wasFound())
+			neighborMap.put(registrarTargetVertex.getId(), null);
 
 		// TODO
 //		if(nameServers != null)
@@ -178,12 +183,12 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph.getSessionData(taskContext.getSession());
 		gsd.getPlacementWorker().setPolicies(null);
 
-		boolean vertexCreated = false;
 		com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 		
 		if(this.domainTargetVertex.requiresCreation())
 		{
 			// if we didn't create it within this batch, we probably need to query for it.
+			// TODO - Need to check if this is the right way of re-query for a target vertex.
 			obtainVertexTargets(taskContext);
 			if (domainTargetVertex.requiresCreation()) {
 				com.whois.WBNP.model.vertex.Domain domain = new com.whois.WBNP.model.vertex.Domain();
@@ -193,12 +198,12 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 				domain.updateIndexes();
 		    }
 		}
-		
-		if ((countryEdgeHandle == null) || (emailEdgeHandle == null) || (registrarEdgeHandle == null))
+		else if ((countryEdgeHandle == null) || (emailEdgeHandle == null) || (registrarEdgeHandle == null))
 		{
 			//this.checkConnectivityMapped();
 			this.checkConnectivity(taskContext);
 		}
+		
 		// process country....
 		if(countryTargetVertex.requiresCreation())
 		{
