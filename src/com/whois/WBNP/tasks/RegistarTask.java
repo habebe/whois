@@ -18,11 +18,12 @@ public class RegistarTask extends ConnectTask
 		registrar.updateIndexes();
     }
 
-    protected void createConnection(com.infinitegraph.GraphDatabase database)
+    protected void createConnection(
+  	      com.infinitegraph.pipelining.TaskContext taskContext)
     {
     	com.infinitegraph.BaseEdge baseEdge = new com.whois.WBNP.model.edge.OwnerRegistrar();
-    	database.addEdge(baseEdge,domainId,
-			 targetVertex.getId(),
+    	taskContext.getGraph().addEdge(baseEdge,domainId,
+			 targetVertex.getId(taskContext.getSession()),
 			 com.infinitegraph.EdgeKind.OUTGOING,
 			 (short)0);	
     }

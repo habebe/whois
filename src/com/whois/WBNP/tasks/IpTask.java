@@ -2,15 +2,22 @@ package com.objectivity.ig.utility;
 import org.slf4j.*;
 
 import com.infinitegraph.BaseVertex;
+import com.infinitegraph.VertexHandle;
 import com.infinitegraph.impl.ObjectivityUtilities;
 
 public class IpTask extends com.infinitegraph.pipelining.QueryTask
 {
     private double volume;
     private long domainId = 0;
+    
     private transient com.whois.WBNP.model.edge.IpDomain ipDomainEdge = null;
     private transient com.infinitegraph.pipelining.TargetVertex ipTargetVertex;
+    
     private static final Logger logger = LoggerFactory.getLogger(IpTask.class);
+
+    static long PreProcessCounter = 0;
+    static long ProcessCounter = 0;		
+
 
     public IpTask(String term,long domainId,double volume)
     {
@@ -56,19 +63,21 @@ public class IpTask extends com.infinitegraph.pipelining.QueryTask
 		ipVertex.updateIndexes();
     }
 
-    protected void createConnection(com.infinitegraph.GraphDatabase database)
+    protected void createConnection(com.infinitegraph.pipelining.TaskContext taskContext)
     {
     	ipDomainEdge = new com.whois.WBNP.model.edge.IpDomain();
 		ipDomainEdge.set_volume(this.getVolume());
-		long ipId = this.ipTargetVertex.getId();
+		long ipId = this.ipTargetVertex.getId(taskContext.getSession());
+		//logger.info(String.format(">> CC,%d,%d", ipId, domainId));
 		if(domainId < ipId)
-		    database.addEdge(ipDomainEdge,domainId,ipId,
+		    taskContext.getGraph().addEdge(ipDomainEdge,domainId,ipId,
 				     com.infinitegraph.EdgeKind.OUTGOING,
 				     (short)0);
 		else
-		    database.addEdge(ipDomainEdge,ipId,domainId,
+		    taskContext.getGraph().addEdge(ipDomainEdge,ipId,domainId,
 				     com.infinitegraph.EdgeKind.INCOMING,
 				     (short)0);
+		//logger.info(" << CC");
     }
 
 
@@ -77,25 +86,27 @@ public class IpTask extends com.infinitegraph.pipelining.QueryTask
     {
 		if (ipTargetVertex.wasFound()) {
 			long time = System.nanoTime();
-	   		BaseVertex vertexObj = (BaseVertex) ObjectivityUtilities
-	   	            .getObjectFromLong(taskContext.getSession(),
-	   	                ipTargetVertex.getId());
+			VertexHandle vertexHandle = taskContext.getGraph().getVertexHandle(
+					ipTargetVertex.getId(taskContext.getSession()));
+	   		BaseVertex vertexObj = (BaseVertex) vertexHandle.getVertex();
 	   	 
+	   		// TODO - we need to get the getEdgeToNeighbor() on the VertexHandle.
 			com.infinitegraph.EdgeHandle handle = vertexObj.getEdgeToNeighbor(domainId);
 			if (handle != null)
 				ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain) handle
 						.getEdge();
 			time = (System.nanoTime() - time);
-			int size = vertexObj.getHandle().getEdgeCount();
+			int size = vertexHandle.getEdgeCount();
 			logger.info(String.format("C,%d,%d,%d", time,
-					ConnectTask.ProcessCounter, size));
+					ProcessCounter, size));
 		}
     }
 
 
     public void process(com.infinitegraph.pipelining.TaskContext taskContext)
-    {
-		ConnectTask.ProcessCounter += 1;
+    {   
+    	//logger.info(">> E <<");
+		ProcessCounter += 1;
 		long time = System.nanoTime();
 		com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 		com.infinitegraph.impl.GraphSessionData gsd = com.infinitegraph.impl.InfiniteGraph
@@ -103,22 +114,19 @@ public class IpTask extends com.infinitegraph.pipelining.QueryTask
 		gsd.getPlacementWorker().setPolicies(null);
 		
 		if (ipTargetVertex.requiresCreation()) {
-			// if we didn't create it within this batch, we probably need to query for it.
-			obtainVertexTargets(taskContext);
-			if (ipTargetVertex.requiresCreation()) {
-				this.addVertex(database);
-			}
+			this.addVertex(database);
 		}
+		//logger.info(">> F <<");
 		long timeA = (System.nanoTime() - time);
 		if (ipDomainEdge == null) {
-			this.createConnection(database);
+			this.createConnection(taskContext);
 		} else {
 			ipDomainEdge.set_volume(ipDomainEdge.get_volume()
 					+ this.getVolume());
 		}
 		time = (System.nanoTime() - time);
-		logger.info(String.format("E,%d,%d", timeA, ConnectTask.ProcessCounter));
-		logger.info(String.format("F,%d,%d", time, ConnectTask.ProcessCounter));
+		logger.info(String.format("E,%d,%d", timeA, ProcessCounter));
+		logger.info(String.format("F,%d,%d", time, ProcessCounter));
     }
 
     @Override

@@ -3,7 +3,9 @@ package com.objectivity.ig.utility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.infinitegraph.VertexHandle;
 import com.infinitegraph.impl.ObjectivityUtilities;
+import com.objy.db.app.Session;
 
 public class WebTask extends com.infinitegraph.pipelining.QueryTask
 {
@@ -71,17 +73,21 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
   {
     if (this.domainVertex.wasFound() && this.ipVertex.wasFound())
     {
+    	Session session = taskContext.getSession();
+    	//logger.info(String.format(" >> C, %d, %d", domainVertex.getId(session), ipVertex.getId(session)));
       // there can only be an existing edge if both vertices were found
       long time = System.nanoTime();
-      com.whois.WBNP.model.vertex.Domain asDomain = (com.whois.WBNP.model.vertex.Domain) ObjectivityUtilities
-          .getObjectFromLong(taskContext.getSession(),
-              this.domainVertex.getId());
+      VertexHandle domainHandle = taskContext.getGraph().getVertexHandle(
+              this.domainVertex.getId(session));
+      // TODO - we need to have getEdgeToNeighbor() to be on the Vertex handle.
+      com.whois.WBNP.model.vertex.Domain asDomain = 
+    		  (com.whois.WBNP.model.vertex.Domain) domainHandle.getVertex();
       com.infinitegraph.EdgeHandle handle = asDomain.getEdgeToNeighbor(ipVertex
-          .getId());
+          .getId(session));
       if (handle != null)
         ipDomainEdge = handle.getEdge().getId();
       time = (System.nanoTime() - time);
-      int size = asDomain.getHandle().getEdgeCount();
+      int size = domainHandle.getEdgeCount();
       logger.info(String.format("C,%d,%d,%d", time, WebTask.ProcessCounter,
           size));
     }
@@ -97,8 +103,12 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
     gsd.getPlacementWorker().setPolicies(null);
 
     com.infinitegraph.GraphDatabase database = taskContext.getGraph();
-    if (this.domainVertex.getId() == 0)
+    Session session = taskContext.getSession();
+    
+    //logger.info(" >> B ");
+    if (this.domainVertex.getId(session) == 0)
     {
+      //logger.info(" >> B1 ");
       com.whois.WBNP.model.vertex.Domain newDomainVertex = new com.whois.WBNP.model.vertex.Domain();
       newDomainVertex.set_name(this.getQueryTerm());
       database.addVertex(newDomainVertex);
@@ -106,10 +116,11 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
       newDomainVertex.updateIndexes();
     }
 
+    //logger.info(" >> B2 ");
     if (this.ipVertex.requiresCreation())
     {
       // SUBMIT TASK
-      IpTask subTask = new IpTask(this.getIp(), this.domainVertex.getId(),
+      IpTask subTask = new IpTask(this.getIp(), this.domainVertex.getId(session),
           this.getVolume());
       database.submitPipelineTask(subTask);
     }
@@ -117,14 +128,19 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
     {
       if (ipDomainEdge == 0)
       {
+          //logger.info(String.format(" >> B2_1,%d,%d", domainVertex.getId(session), ipVertex.getId(session)));
+      	
         com.whois.WBNP.model.edge.IpDomain newIpDomainEdge = new com.whois.WBNP.model.edge.IpDomain();
-        database.addEdge(newIpDomainEdge, this.domainVertex.getId(),
-            this.ipVertex.getId(), com.infinitegraph.EdgeKind.OUTGOING,
+        database.addEdge(newIpDomainEdge, this.domainVertex.getId(session),
+            this.ipVertex.getId(session), com.infinitegraph.EdgeKind.OUTGOING,
             (short) 0);
         newIpDomainEdge.set_volume(this.getVolume());
+        //logger.info(" << B2_1 ");
       }
       else
       {
+          //logger.info(" >> B2_2 ");
+      	
         com.whois.WBNP.model.edge.IpDomain existingIpDomainEdge = (com.whois.WBNP.model.edge.IpDomain) ObjectivityUtilities
             .getObjectFromLong(taskContext.getSession(), ipDomainEdge);
         existingIpDomainEdge.set_volume(existingIpDomainEdge.get_volume()

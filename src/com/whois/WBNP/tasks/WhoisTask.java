@@ -106,15 +106,15 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		this.countryTargetVertex = targetManager.getTargetVertex(
 		      com.whois.WBNP.model.vertex.Country.class, this.getCountry());
 		if (countryTargetVertex.wasFound())
-			neighborMap.put(countryTargetVertex.getId(), null);
+			neighborMap.put(countryTargetVertex.getId(taskContext.getSession()), null);
 		this.emailTargetVertex = targetManager.getTargetVertex(
 		          com.whois.WBNP.model.vertex.Email.class, this.getEmail());
 		if (emailTargetVertex.wasFound())
-			neighborMap.put(emailTargetVertex.getId(), null);
+			neighborMap.put(emailTargetVertex.getId(taskContext.getSession()), null);
 		this.registrarTargetVertex = targetManager.getTargetVertex(
 		          com.whois.WBNP.model.vertex.Registrar.class, this.getRegistrar());
 		if (registrarTargetVertex.wasFound())
-			neighborMap.put(registrarTargetVertex.getId(), null);
+			neighborMap.put(registrarTargetVertex.getId(taskContext.getSession()), null);
 
 		// TODO
 //		if(nameServers != null)
@@ -140,14 +140,14 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			long time = System.nanoTime();
 			com.whois.WBNP.model.vertex.Domain domainVertex = (com.whois.WBNP.model.vertex.Domain) ObjectivityUtilities
 			          .getObjectFromLong(taskContext.getSession(),
-			              domainTargetVertex.getId());
+			              domainTargetVertex.getId(taskContext.getSession()));
 			domainVertex.getEdgeToNeighbors(neighborMap);
 			if (countryTargetVertex.wasFound())
-				countryEdgeHandle = neighborMap.get(countryTargetVertex.getId());
+				countryEdgeHandle = neighborMap.get(countryTargetVertex.getId(taskContext.getSession()));
 			if (emailTargetVertex.wasFound())
-				emailEdgeHandle = neighborMap.get(emailTargetVertex.getId());
+				emailEdgeHandle = neighborMap.get(emailTargetVertex.getId(taskContext.getSession()));
 			if (registrarTargetVertex.wasFound())
-				registrarEdgeHandle = neighborMap.get(registrarTargetVertex.getId());
+				registrarEdgeHandle = neighborMap.get(registrarTargetVertex.getId(taskContext.getSession()));
 
 			// TODO
 			// we need to add similar code for the NameServers...
@@ -207,7 +207,8 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		// process country....
 		if(countryTargetVertex.requiresCreation())
 		{
-			CountryTask subTask = new CountryTask(this.getCountry(),this.domainTargetVertex.getId());
+			CountryTask subTask = new CountryTask(this.getCountry(),
+					this.domainTargetVertex.getId(taskContext.getSession()));
 			database.submitPipelineTask(subTask);
 
 	    }
@@ -215,36 +216,38 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		{
 			this.addEdge(database,
 				     new com.whois.WBNP.model.edge.OwnerCountry(),
-				     this.domainTargetVertex.getId(),
-				     this.countryTargetVertex.getId());
+				     this.domainTargetVertex.getId(taskContext.getSession()),
+				     this.countryTargetVertex.getId(taskContext.getSession()));
 	    }
 		// process email
 		if(this.emailTargetVertex.requiresCreation())
 		{
-			EmailTask subTask = new EmailTask(this.getEmail(),this.domainTargetVertex.getId());
+			EmailTask subTask = new EmailTask(this.getEmail(),
+					this.domainTargetVertex.getId(taskContext.getSession()));
 			database.submitPipelineTask(subTask);
 		}
 		else if(emailEdgeHandle == null)
 		{
 			this.addEdge(database,
 				     new com.whois.WBNP.model.edge.OwnerEmail(),
-				     this.domainTargetVertex.getId(),
-				     this.emailTargetVertex.getId()
+				     this.domainTargetVertex.getId(taskContext.getSession()),
+				     this.emailTargetVertex.getId(taskContext.getSession())
 				     );
 		}
 
 		// process registrar...
 		if(registrarTargetVertex.requiresCreation())
 	    {
-			RegistarTask subTask = new RegistarTask(this.getRegistrar(),this.domainTargetVertex.getId());
+			RegistarTask subTask = new RegistarTask(this.getRegistrar(),
+					this.domainTargetVertex.getId(taskContext.getSession()));
 			database.submitPipelineTask(subTask);
 	    }
 		else if(registrarEdgeHandle == null)
 		{
 			this.addEdge(database,
 				     new com.whois.WBNP.model.edge.OwnerRegistrar(),
-				     this.domainTargetVertex.getId(),
-				     this.registrarTargetVertex.getId());
+				     this.domainTargetVertex.getId(taskContext.getSession()),
+				     this.registrarTargetVertex.getId(taskContext.getSession()));
 		}
 		// TODO
 //		if(this.nameServerNodes != null)

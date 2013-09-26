@@ -33,7 +33,8 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
     static long ProcessCounter = 0;		
 
     protected abstract void addVertex(com.infinitegraph.GraphDatabase database);
-    protected abstract void createConnection(com.infinitegraph.GraphDatabase database);
+    protected abstract void createConnection(
+  	      com.infinitegraph.pipelining.TaskContext taskContext);
     
     @Override
     public void setPrimaryKeys(com.infinitegraph.pipelining.TargetManager targetManager)
@@ -60,7 +61,7 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
     		long time = System.nanoTime();
     		BaseVertex vertexObj = (BaseVertex) ObjectivityUtilities
             .getObjectFromLong(taskContext.getSession(),
-                targetVertex.getId());
+                targetVertex.getId(taskContext.getSession()));
     		com.infinitegraph.EdgeHandle handle = vertexObj.getEdgeToNeighbor(this.domainId);
     	    if (handle != null)
     	        domainEdgeId = handle.getEdge().getId();	
@@ -89,7 +90,7 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
 		}
 
 		if (domainEdgeId == 0) {
-			this.createConnection(database);
+			this.createConnection(taskContext);
 		}
 		time = (System.nanoTime() - time);
 		logger.info(String.format("F,%d,%d", time, ConnectTask.ProcessCounter));
