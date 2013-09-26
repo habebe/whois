@@ -4,6 +4,7 @@ import java.util.HashMap;
 import org.slf4j.*;
 
 import com.infinitegraph.EdgeHandle;
+import com.infinitegraph.VertexHandle;
 import com.infinitegraph.impl.ObjectivityUtilities;
 
 public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
@@ -120,8 +121,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		if(domainTargetVertex.wasFound())
 	    {
 			long time = System.nanoTime();
-			com.whois.WBNP.model.vertex.Domain domainVertex = (com.whois.WBNP.model.vertex.Domain) ObjectivityUtilities
-			          .getObjectFromLong(taskContext.getSession(),
+			VertexHandle domainVertexHandle = taskContext.getGraph().getVertexHandle(
 			              domainTargetVertex.getId(taskContext.getSession()));
 			// fill the neighbor map
 			if (countryTargetVertex.wasFound())
@@ -136,10 +136,10 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 					neighborMap.put(this.nameServerTargetVertexes[i] .getId(taskContext.getSession()), null);
 			}
 			
-			domainVertex.getEdgeToNeighbors(neighborMap);
+			domainVertexHandle.getEdgeToNeighbors(neighborMap);
 			
 			time = (System.nanoTime()-time);
-			int size = domainVertex.getHandle().getEdgeCount();
+			int size = domainVertexHandle.getEdgeCount();
                 logger.info(String.format("C,%d,%d,%d,Domain=%s",time,WhoisTask.ProcessCounter,size,this.getQueryTerm()));
 	    }
     }
