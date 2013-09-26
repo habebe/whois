@@ -8,7 +8,24 @@ public class NameServerTask extends ConnectTask
     {
     	super(term,domainId);
     }
-    
+
+    @Override
+    public void setPrimaryKeys(com.infinitegraph.pipelining.TargetManager targetManager)
+    {
+      targetManager.setPrimaryKey(com.whois.WBNP.model.vertex.NameServer.class, "name");
+    }
+
+    @Override
+    public void obtainVertexTargets(
+        com.infinitegraph.pipelining.TaskContext taskContext)
+    {
+      com.infinitegraph.pipelining.TargetManager targetManager = 
+          taskContext.getTargetManager();
+      targetVertex = targetManager.getTargetVertex(
+    		  com.whois.WBNP.model.vertex.NameServer.class, this.getQueryTerm());
+    }
+
+
     @Override
     protected void addVertex(com.infinitegraph.GraphDatabase database)
     {

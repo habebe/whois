@@ -2,15 +2,17 @@ package com.objectivity.ig.utility;
 import org.slf4j.*;
 
 import com.infinitegraph.BaseVertex;
+import com.infinitegraph.EdgeHandle;
 import com.infinitegraph.VertexHandle;
 import com.infinitegraph.impl.ObjectivityUtilities;
+import com.whois.WBNP.model.edge.IpDomain;
 
 public class IpTask extends com.infinitegraph.pipelining.QueryTask
 {
     private double volume;
     private long domainId = 0;
     
-    private transient com.whois.WBNP.model.edge.IpDomain ipDomainEdge = null;
+    private transient EdgeHandle ipDomainEdgeHandle = null;
     private transient com.infinitegraph.pipelining.TargetVertex ipTargetVertex;
     
     private static final Logger logger = LoggerFactory.getLogger(IpTask.class);
@@ -65,7 +67,7 @@ public class IpTask extends com.infinitegraph.pipelining.QueryTask
 
     protected void createConnection(com.infinitegraph.pipelining.TaskContext taskContext)
     {
-    	ipDomainEdge = new com.whois.WBNP.model.edge.IpDomain();
+    	com.whois.WBNP.model.edge.IpDomain ipDomainEdge = new com.whois.WBNP.model.edge.IpDomain();
 		ipDomainEdge.set_volume(this.getVolume());
 		long ipId = this.ipTargetVertex.getId(taskContext.getSession());
 		//logger.info(String.format(">> CC,%d,%d", ipId, domainId));
@@ -88,13 +90,8 @@ public class IpTask extends com.infinitegraph.pipelining.QueryTask
 			long time = System.nanoTime();
 			VertexHandle vertexHandle = taskContext.getGraph().getVertexHandle(
 					ipTargetVertex.getId(taskContext.getSession()));
-	   		BaseVertex vertexObj = (BaseVertex) vertexHandle.getVertex();
 	   	 
-	   		// TODO - we need to get the getEdgeToNeighbor() on the VertexHandle.
-			com.infinitegraph.EdgeHandle handle = vertexObj.getEdgeToNeighbor(domainId);
-			if (handle != null)
-				ipDomainEdge = (com.whois.WBNP.model.edge.IpDomain) handle
-						.getEdge();
+			ipDomainEdgeHandle = vertexHandle.getEdgeToNeighbor(domainId);
 			time = (System.nanoTime() - time);
 			int size = vertexHandle.getEdgeCount();
 			logger.info(String.format("C,%d,%d,%d", time,
@@ -118,9 +115,10 @@ public class IpTask extends com.infinitegraph.pipelining.QueryTask
 		}
 		//logger.info(">> F <<");
 		long timeA = (System.nanoTime() - time);
-		if (ipDomainEdge == null) {
+		if (ipDomainEdgeHandle == null) {
 			this.createConnection(taskContext);
 		} else {
+			IpDomain ipDomainEdge = (IpDomain) ipDomainEdgeHandle.getEdge();
 			ipDomainEdge.set_volume(ipDomainEdge.get_volume()
 					+ this.getVolume());
 		}

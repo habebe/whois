@@ -7,7 +7,23 @@ public class CountryTask extends ConnectTask
     {
     	super(term, domainId);
     }
-           
+              
+    @Override
+    public void setPrimaryKeys(com.infinitegraph.pipelining.TargetManager targetManager)
+    {
+      targetManager.setPrimaryKey(com.whois.WBNP.model.vertex.Country.class, "name");
+    }
+
+    @Override
+    public void obtainVertexTargets(
+        com.infinitegraph.pipelining.TaskContext taskContext)
+    {
+      com.infinitegraph.pipelining.TargetManager targetManager = 
+          taskContext.getTargetManager();
+      targetVertex = targetManager.getTargetVertex(
+    		  com.whois.WBNP.model.vertex.Country.class, this.getQueryTerm());
+    }
+
     protected void addVertex(com.infinitegraph.GraphDatabase database)
     {
 		com.whois.WBNP.model.vertex.Country country = new com.whois.WBNP.model.vertex.Country();

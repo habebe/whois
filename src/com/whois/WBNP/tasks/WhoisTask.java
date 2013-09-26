@@ -6,30 +6,20 @@ import org.slf4j.*;
 import com.infinitegraph.EdgeHandle;
 import com.infinitegraph.impl.ObjectivityUtilities;
 
-//class Node
-//{
-//    public com.infinitegraph.BaseVertex vertex = null;
-//    public String data = null;
-//    public boolean connected = false;
-//}
-
-
 public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 {
     private static final Logger logger = LoggerFactory.getLogger(WhoisTask.class);
-    //private transient Node[] nameServerNodes = null;
 
     private transient com.infinitegraph.pipelining.TargetVertex domainTargetVertex;
     private transient com.infinitegraph.pipelining.TargetVertex	countryTargetVertex;
     private transient com.infinitegraph.pipelining.TargetVertex	emailTargetVertex;
     private transient com.infinitegraph.pipelining.TargetVertex registrarTargetVertex;
+    private transient com.infinitegraph.pipelining.TargetVertex[] nameServerTargetVertexes;
+    
+    private transient String[] nameServers = null;
     
     private transient HashMap<Long, EdgeHandle> neighborMap = new HashMap<Long, EdgeHandle>();
-    
-    private transient com.infinitegraph.EdgeHandle countryEdgeHandle = null;
-    private transient com.infinitegraph.EdgeHandle emailEdgeHandle = null;
-    private transient com.infinitegraph.EdgeHandle registrarEdgeHandle = null;
-    
+        
     private String country;
     private String registrar;
     private String email;
@@ -71,7 +61,6 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
     private String[] getNameServers()
     {
 		fetch();
-		String[] nameServers = null;
 		if(this.nameServerStatement != null)
 	    {
 			nameServers = this.nameServerStatement.split("\\|");
@@ -105,29 +94,22 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		      com.whois.WBNP.model.vertex.Domain.class, this.getQueryTerm());
 		this.countryTargetVertex = targetManager.getTargetVertex(
 		      com.whois.WBNP.model.vertex.Country.class, this.getCountry());
-		if (countryTargetVertex.wasFound())
-			neighborMap.put(countryTargetVertex.getId(taskContext.getSession()), null);
 		this.emailTargetVertex = targetManager.getTargetVertex(
 		          com.whois.WBNP.model.vertex.Email.class, this.getEmail());
-		if (emailTargetVertex.wasFound())
-			neighborMap.put(emailTargetVertex.getId(taskContext.getSession()), null);
 		this.registrarTargetVertex = targetManager.getTargetVertex(
 		          com.whois.WBNP.model.vertex.Registrar.class, this.getRegistrar());
-		if (registrarTargetVertex.wasFound())
-			neighborMap.put(registrarTargetVertex.getId(taskContext.getSession()), null);
 
-		// TODO
-//		if(nameServers != null)
-//		{
-//			this.nameServerNodes = new Node[nameServers.length];
-//			for(int i=0;i<nameServers.length;i++)
-//			{
-//				this.nameServerNodes[i] = targetManager.getTargetVertex(
-//						com.whois.WBNP.model.vertex.NameServer.class,
-//								     nameServers[i]);
-//				this.nameServerNodes[i].data = nameServers[i];
-//			}
-//		}
+		 String[] nameServers = this.getNameServers();
+
+		if(nameServers != null)
+		{
+			this.nameServerTargetVertexes = new com.infinitegraph.pipelining.TargetVertex[nameServers.length];
+			for(int i=0;i<nameServers.length;i++)
+			{
+				this.nameServerTargetVertexes[i] = targetManager.getTargetVertex(
+						com.whois.WBNP.model.vertex.NameServer.class, nameServers[i]);
+			}
+		}
     }
 
     @Override
@@ -141,16 +123,20 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			com.whois.WBNP.model.vertex.Domain domainVertex = (com.whois.WBNP.model.vertex.Domain) ObjectivityUtilities
 			          .getObjectFromLong(taskContext.getSession(),
 			              domainTargetVertex.getId(taskContext.getSession()));
-			domainVertex.getEdgeToNeighbors(neighborMap);
+			// fill the neighbor map
 			if (countryTargetVertex.wasFound())
-				countryEdgeHandle = neighborMap.get(countryTargetVertex.getId(taskContext.getSession()));
+				neighborMap.put(countryTargetVertex.getId(taskContext.getSession()), null);
 			if (emailTargetVertex.wasFound())
-				emailEdgeHandle = neighborMap.get(emailTargetVertex.getId(taskContext.getSession()));
+				neighborMap.put(emailTargetVertex.getId(taskContext.getSession()), null);
 			if (registrarTargetVertex.wasFound())
-				registrarEdgeHandle = neighborMap.get(registrarTargetVertex.getId(taskContext.getSession()));
-
-			// TODO
-			// we need to add similar code for the NameServers...
+				neighborMap.put(registrarTargetVertex.getId(taskContext.getSession()), null);
+			for(int i=0;i<nameServerTargetVertexes.length;i++)
+			{
+				if (this.nameServerTargetVertexes[i].wasFound())
+					neighborMap.put(this.nameServerTargetVertexes[i] .getId(taskContext.getSession()), null);
+			}
+			
+			domainVertex.getEdgeToNeighbors(neighborMap);
 			
 			time = (System.nanoTime()-time);
 			int size = domainVertex.getHandle().getEdgeCount();
@@ -187,21 +173,22 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 		
 		if(this.domainTargetVertex.requiresCreation())
 		{
-			// if we didn't create it within this batch, we probably need to query for it.
-			// TODO - Need to check if this is the right way of re-query for a target vertex.
-			obtainVertexTargets(taskContext);
-			if (domainTargetVertex.requiresCreation()) {
-				com.whois.WBNP.model.vertex.Domain domain = new com.whois.WBNP.model.vertex.Domain();
-				domain.set_name(this.getQueryTerm());
-				database.addVertex(domain);
-				domainTargetVertex.setId(domain.getId());
-				domain.updateIndexes();
-		    }
+			com.whois.WBNP.model.vertex.Domain domain = new com.whois.WBNP.model.vertex.Domain();
+			domain.set_name(this.getQueryTerm());
+			database.addVertex(domain);
+			domainTargetVertex.setId(domain.getId());
+			domain.updateIndexes();
 		}
-		else if ((countryEdgeHandle == null) || (emailEdgeHandle == null) || (registrarEdgeHandle == null))
+		else 
 		{
-			//this.checkConnectivityMapped();
-			this.checkConnectivity(taskContext);
+			for (EdgeHandle eh : this.neighborMap.values())
+			{
+				if (eh == null)
+				{
+					this.checkConnectivity(taskContext);
+					break;
+				}
+			}
 		}
 		
 		// process country....
@@ -212,7 +199,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			database.submitPipelineTask(subTask);
 
 	    }
-		else if(countryEdgeHandle == null)
+		else if(this.neighborMap.get(this.countryTargetVertex.getId(taskContext.getSession())) == null)
 		{
 			this.addEdge(database,
 				     new com.whois.WBNP.model.edge.OwnerCountry(),
@@ -226,7 +213,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 					this.domainTargetVertex.getId(taskContext.getSession()));
 			database.submitPipelineTask(subTask);
 		}
-		else if(emailEdgeHandle == null)
+		else if(this.neighborMap.get(this.emailTargetVertex.getId(taskContext.getSession())) == null)
 		{
 			this.addEdge(database,
 				     new com.whois.WBNP.model.edge.OwnerEmail(),
@@ -242,41 +229,32 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 					this.domainTargetVertex.getId(taskContext.getSession()));
 			database.submitPipelineTask(subTask);
 	    }
-		else if(registrarEdgeHandle == null)
+		else if(this.neighborMap.get(this.registrarTargetVertex.getId(taskContext.getSession())) == null)
 		{
 			this.addEdge(database,
 				     new com.whois.WBNP.model.edge.OwnerRegistrar(),
 				     this.domainTargetVertex.getId(taskContext.getSession()),
 				     this.registrarTargetVertex.getId(taskContext.getSession()));
 		}
-		// TODO
-//		if(this.nameServerNodes != null)
-//		    {
-//			for(Node nameServer:this.nameServerNodes)
-//			    {
-//				if(nameServer.vertex == null)
-//				    {
-//					if(nameServer.data != null)
-//					    {
-//						nameServer.data = nameServer.data.trim();
-//						if(nameServer.data.length() > 0)
-//						    {
-//							NameServerTask subTask = new NameServerTask(nameServer.data,this.domainNode.vertex.getId());
-//							database.submitPipelineTask(subTask);
-//						    }
-//					    }
-//				    }
-//				else if(isConnected(nameServer) == false)
-//				    {
-//					this.addEdge(database,
-//						     new com.whois.WBNP.model.edge.NameServerEdge(),
-//						     this.domainNode.vertex.getId(),
-//						     nameServer.vertex.getId());
-//				    }
-//			    }
-//		    }
-//		
-//	    }
+		// name servers
+		for(int i=0;i<nameServerTargetVertexes.length;i++)
+		{
+			if (this.nameServerTargetVertexes[i].requiresCreation())
+			{
+				// TODO - cleanup the Name server code, perhaps with an inner 
+				//        class to hold the string and the target vertex.
+				NameServerTask subTask = new NameServerTask(nameServers[i],
+						this.domainTargetVertex.getId(taskContext.getSession()));
+				database.submitPipelineTask(subTask);
+		    }
+			else if(this.neighborMap.get(this.countryTargetVertex.getId(taskContext.getSession())) == null)
+		    {
+				this.addEdge(database,
+				     new com.whois.WBNP.model.edge.NameServerEdge(),
+				     this.domainTargetVertex.getId(taskContext.getSession()),
+				     this.nameServerTargetVertexes[i] .getId(taskContext.getSession()));
+		    }
+	    }
 	time  = (System.nanoTime() - time);
 	logger.info(String.format("B,%d,%d",time,WhoisTask.ProcessCounter));
     }

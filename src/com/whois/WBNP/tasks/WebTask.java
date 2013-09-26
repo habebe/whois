@@ -106,7 +106,7 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
     Session session = taskContext.getSession();
     
     //logger.info(" >> B ");
-    if (this.domainVertex.getId(session) == 0)
+    if (this.domainVertex.requiresCreation())
     {
       //logger.info(" >> B1 ");
       com.whois.WBNP.model.vertex.Domain newDomainVertex = new com.whois.WBNP.model.vertex.Domain();
@@ -139,10 +139,9 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
       }
       else
       {
-          //logger.info(" >> B2_2 ");
-      	
-        com.whois.WBNP.model.edge.IpDomain existingIpDomainEdge = (com.whois.WBNP.model.edge.IpDomain) ObjectivityUtilities
-            .getObjectFromLong(taskContext.getSession(), ipDomainEdge);
+          //logger.info(" >> B2_2 ");     	
+        com.whois.WBNP.model.edge.IpDomain existingIpDomainEdge = (com.whois.WBNP.model.edge.IpDomain) 
+        		taskContext.getGraph().getEdge(ipDomainEdge);
         existingIpDomainEdge.set_volume(existingIpDomainEdge.get_volume()
             + this.getVolume());
       }

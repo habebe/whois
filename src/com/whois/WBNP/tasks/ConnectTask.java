@@ -2,6 +2,7 @@ package com.objectivity.ig.utility;
 import org.slf4j.*;
 
 import com.infinitegraph.BaseVertex;
+import com.infinitegraph.VertexHandle;
 import com.infinitegraph.impl.ObjectivityUtilities;
 
 public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
@@ -35,22 +36,7 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
     protected abstract void addVertex(com.infinitegraph.GraphDatabase database);
     protected abstract void createConnection(
   	      com.infinitegraph.pipelining.TaskContext taskContext);
-    
-    @Override
-    public void setPrimaryKeys(com.infinitegraph.pipelining.TargetManager targetManager)
-    {
-      targetManager.setPrimaryKey(this.getClass(), "name");
-    }
-
-    @Override
-    public void obtainVertexTargets(
-        com.infinitegraph.pipelining.TaskContext taskContext)
-    {
-      com.infinitegraph.pipelining.TargetManager targetManager = 
-          taskContext.getTargetManager();
-      targetVertex = targetManager.getTargetVertex(this.getClass(), this.getQueryTerm());
-    }
-    
+        
     
     @Override
     public void checkConnectivity(
@@ -59,14 +45,13 @@ public abstract class ConnectTask extends com.infinitegraph.pipelining.QueryTask
     	if(targetVertex.wasFound())
 	    {
     		long time = System.nanoTime();
-    		BaseVertex vertexObj = (BaseVertex) ObjectivityUtilities
-            .getObjectFromLong(taskContext.getSession(),
+    		VertexHandle vertexHandle = taskContext.getGraph().getVertexHandle(
                 targetVertex.getId(taskContext.getSession()));
-    		com.infinitegraph.EdgeHandle handle = vertexObj.getEdgeToNeighbor(this.domainId);
+    		com.infinitegraph.EdgeHandle handle = vertexHandle.getEdgeToNeighbor(this.domainId);
     	    if (handle != null)
     	        domainEdgeId = handle.getEdge().getId();	
     		time = (System.nanoTime() - time);
-    		int size = vertexObj.getHandle().getEdgeCount();
+    		int size = vertexHandle.getEdgeCount();
     		logger.info(String.format("C,%d,%d,%d,%s,%b",time,ConnectTask.ProcessCounter,size,this.getQueryTerm(),(domainEdgeId != 0)));
 	    }
     }
