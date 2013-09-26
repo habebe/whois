@@ -116,7 +116,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
     @Override
     public void checkConnectivity(
         com.infinitegraph.pipelining.TaskContext taskContext)
-    {
+    { 	
 		boolean status = false;
 		if(domainTargetVertex.wasFound())
 	    {
@@ -171,6 +171,8 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 
 		com.infinitegraph.GraphDatabase database = taskContext.getGraph();
 		
+		boolean justCreatedDomain = false;
+		
 		if(this.domainTargetVertex.requiresCreation())
 		{
 			com.whois.WBNP.model.vertex.Domain domain = new com.whois.WBNP.model.vertex.Domain();
@@ -178,6 +180,7 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			database.addVertex(domain);
 			domainTargetVertex.setId(domain.getId());
 			domain.updateIndexes();
+			justCreatedDomain = true;
 		}
 		else 
 		{
@@ -199,7 +202,8 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 			database.submitPipelineTask(subTask);
 
 	    }
-		else if(this.neighborMap.get(this.countryTargetVertex.getId(taskContext.getSession())) == null)
+		else if(justCreatedDomain || 
+				this.neighborMap.get(this.countryTargetVertex.getId(taskContext.getSession())) == null)
 		{
 			this.addEdge(database,
 				     new com.whois.WBNP.model.edge.OwnerCountry(),
@@ -213,7 +217,8 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 					this.domainTargetVertex.getId(taskContext.getSession()));
 			database.submitPipelineTask(subTask);
 		}
-		else if(this.neighborMap.get(this.emailTargetVertex.getId(taskContext.getSession())) == null)
+		else if(justCreatedDomain ||
+				this.neighborMap.get(this.emailTargetVertex.getId(taskContext.getSession())) == null)
 		{
 			this.addEdge(database,
 				     new com.whois.WBNP.model.edge.OwnerEmail(),
@@ -229,7 +234,8 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 					this.domainTargetVertex.getId(taskContext.getSession()));
 			database.submitPipelineTask(subTask);
 	    }
-		else if(this.neighborMap.get(this.registrarTargetVertex.getId(taskContext.getSession())) == null)
+		else if(justCreatedDomain ||
+				this.neighborMap.get(this.registrarTargetVertex.getId(taskContext.getSession())) == null)
 		{
 			this.addEdge(database,
 				     new com.whois.WBNP.model.edge.OwnerRegistrar(),
@@ -247,7 +253,8 @@ public class WhoisTask extends com.infinitegraph.pipelining.QueryTask
 						this.domainTargetVertex.getId(taskContext.getSession()));
 				database.submitPipelineTask(subTask);
 		    }
-			else if(this.neighborMap.get(this.countryTargetVertex.getId(taskContext.getSession())) == null)
+			else if(justCreatedDomain ||
+					this.neighborMap.get(this.countryTargetVertex.getId(taskContext.getSession())) == null)
 		    {
 				this.addEdge(database,
 				     new com.whois.WBNP.model.edge.NameServerEdge(),
