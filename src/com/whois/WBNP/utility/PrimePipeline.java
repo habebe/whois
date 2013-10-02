@@ -16,11 +16,12 @@ public class PrimePipeline
 	
 	try
 	    {
-		int numberSignals = 8;//getNumberOfLocations(bootFilePath);
+		int numberSignals = 10;//getNumberOfLocations(bootFilePath);
 		logger.debug("Priming the pipeline");
 		TargetlessTaskSignal[] signals = new TargetlessTaskSignal[numberSignals];
 		for(int i=0; i < numberSignals; i++)
-		    {
+		{
+			try {
 			tx = database.beginTransaction(AccessMode.READ_WRITE);
 			TargetlessTaskRoot root = new TargetlessTaskRoot();
 			root.persist();
@@ -30,13 +31,14 @@ public class PrimePipeline
 			signals[i] = new TargetlessTaskSignal(rootId);
 			database.submitPipelineTask(signals[i]);
 			tx.commit();              
+			}
+			catch(Exception ex)
+	    	{
+			//System.out.println(ex.toString());
+			logger.error("Bad Prime : {}", ex.toString());
 		    }
 	    }
-	catch(Exception ex)
-	    {
-		//System.out.println(ex.toString());
-		logger.error("Bad Prime : {}", ex.toString());
-	    }
+	}
 	finally
 	    {
 		if(tx != null)
