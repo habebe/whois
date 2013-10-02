@@ -150,6 +150,7 @@ public class Benchmark
         options.addOption(new Option("help",helpMessage));
         options.addOption(OptionBuilder.withArgName("string").hasArg().withDescription(graphNameMessage).create("graph"));
         options.addOption(OptionBuilder.withArgName("string").hasArg().withDescription(propertyMessage).create("property"));
+        options.addOption(OptionBuilder.withArgName("integer").hasArg().withDescription("Location size").create("location_size"));
 
        
 	options.addOption(OptionBuilder.withArgName("string").hasArg().withDescription(opFileNameMessage).create("op_file"));
@@ -179,6 +180,7 @@ public class Benchmark
 		int txLimit = Integer.parseInt(commandLine.getOptionValue("tx_limit",(new Integer(-1)).toString()));
 		com.objectivity.ig.utility.Globals.SetVerboseLevel(Integer.parseInt(commandLine.getOptionValue("verbose",(new Integer(2)).toString())));
 		com.objectivity.ig.utility.Globals.setProfileTag(commandLine.getOptionValue("profile"));
+		int storageLocations = Integer.parseInt(commandLine.getOptionValue("location_size",(new Integer(12)).toString()));
 
                 if(opFileName == null)
                 {
@@ -213,7 +215,7 @@ public class Benchmark
 					object.setTransactionType(com.objectivity.ig.utility.TransactionType.Pipeline);
 					if(com.objectivity.ig.utility.Globals.GetVerboseLevel() > 0)
 						System.out.println("Running in write/pipeline mode.");
-					com.objectivity.ig.utility.PrimePipeline.prime(object.getDatabase());
+					com.objectivity.ig.utility.PrimePipeline.prime(object.getDatabase(),storageLocations);
 				}
 				else
 				{

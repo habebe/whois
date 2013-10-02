@@ -48,7 +48,16 @@ public class WebTask extends com.infinitegraph.pipelining.QueryTask
     {
 	super(Domain);
 	this.set(Ip,Volume);
+
     }
+
+    public int hashCode()
+    {
+	int value = super.hashCode();
+	System.out.printf("WebTaskHash,%s,%d\n",this.getQueryTerm(),value);
+	return value;
+    }
+
     
     private void set(String Ip,double Volume)
     {
